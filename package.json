@@ -6,7 +6,7 @@
   "scripts": {
     "build": "run-s build:*",
     "build:core": "npm --workspace packages/lambda-edge-authorizers run build --if-present",
-    "build:examples": "npm --workspace packages/example-* run build --if-present"
+    "build:examples": "npm --workspace packages/lambda-example-* run build --if-present"
   },
   "workspaces": [
     "packages/*"

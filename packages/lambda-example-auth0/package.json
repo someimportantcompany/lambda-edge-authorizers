@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "build": "run-s build:*",
-    "build:clean": "rimraf ./index.dist.js",
-    "build:index": "esbuild index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=index.dist.js"
+    "build:clean": "rimraf ./index-dist.js",
+    "build:index": "esbuild index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=index-dist.js"
   },
   "dependencies": {
     "lambda-edge-authorizers": "../lambda-edge-authorizers"

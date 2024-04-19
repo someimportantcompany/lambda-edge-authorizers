@@ -40,7 +40,7 @@ resource "aws_iam_role" "lambda" {
 
 data "archive_file" "this" {
   type        = "zip"
-  source_file = "../dist/handlers/${random_id.lambda.keepers.service}.js"
+  source_file = "../packages/lambda-example-${random_id.lambda.keepers.service}/index-dist.js"
   output_path = ".terraform/handler.zip"
 }
 
@@ -48,7 +48,7 @@ resource "aws_lambda_function" "this" {
   runtime          = "nodejs18.x"
   function_name    = "${var.prefix}-${random_id.lambda.keepers.service}-${random_id.lambda.hex}"
   role             = aws_iam_role.lambda.arn
-  handler          = "${random_id.lambda.keepers.service}.handler"
+  handler          = "index-dist.handler"
   filename         = data.archive_file.this.output_path
   source_code_hash = data.archive_file.this.output_base64sha256
   publish          = true
