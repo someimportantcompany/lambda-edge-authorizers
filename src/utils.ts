@@ -1,3 +1,4 @@
+import * as cookie from 'cookie';
 import type { CloudFrontRequest } from 'aws-lambda';
 
 export function getHeader(req: CloudFrontRequest, key: string): string | undefined {
@@ -9,6 +10,11 @@ export function getHeader(req: CloudFrontRequest, key: string): string | undefin
 export function getMultiHeader(req: CloudFrontRequest, key: string): string[] | undefined {
   const values = req.headers[key] ?? req.headers[key.toLowerCase()] ?? undefined;
   return values?.filter(r => r.value)?.map(r => r.value);
+}
+
+export function getCookies<T extends Record<string, string>>(req: CloudFrontRequest): T {
+  const values = (getMultiHeader(req, 'Cookie') ?? []).join(';');
+  return cookie.parse(values) as T;
 }
 
 interface LogMessage {

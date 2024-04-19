@@ -23,5 +23,6 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [ "./cdk.ts", "./Pulumi.ts" ]
 }

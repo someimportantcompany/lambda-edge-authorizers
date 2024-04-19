@@ -1,6 +1,6 @@
 import type { CloudFrontRequest, CloudFrontRequestResult } from 'aws-lambda';
 
-import { debugLog } from '../utils';
+import { getCookies, debugLog } from '../utils';
 
 export interface Auth0AuthorizerOpts {
   callbackPath?: string,
@@ -21,8 +21,9 @@ export const auth0DefaultOpts = {
 export function handleAuth0Authorizer(req: CloudFrontRequest, overrides?: Auth0AuthorizerOpts):
 CloudFrontRequestResult | Promise<CloudFrontRequestResult> {
   const opts = { ...auth0DefaultOpts, ...overrides };
+  const cookies = getCookies(req);
 
-  debugLog({ req, opts });
+  debugLog({ req, cookies, opts });
 
   // shouldRedirectToLogin if
   // - Path is login start

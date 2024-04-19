@@ -5,22 +5,15 @@
   "main": "./dist",
   "scripts": {
     "build": "run-s build:*",
+    "build:clean": "rimraf ./dist",
     "build:core": "esbuild src/index.ts --platform=node --target=node16 --format=cjs --outdir=dist/",
-    "build:core-ts": "tsc src/*.ts -declaration --emitDeclarationOnly --outDir dist/",
     "build:lib": "esbuild src/lib/*.ts --bundle --platform=node --target=node16 --format=cjs --outdir=dist/lib/",
-    "build:lib-ts": "tsc src/lib/*.ts --declaration --emitDeclarationOnly --outDir dist/lib/",
     "build:handlers": "esbuild src/handlers/*.ts --bundle --platform=node --target=node16 --format=cjs --outdir=dist/handlers/",
-    "build:handlers-ts": "tsc src/handlers/*.ts --declaration --emitDeclarationOnly --outDir dist/handlers/"
+    "build:ts": "tsc --declaration --emitDeclarationOnly"
   },
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.137",
-    "@types/node": "^20.12.7",
-    "esbuild": "^0.20.2",
-    "http-assert-plus": "^2.0.1",
-    "npm-run-all": "^4.1.5",
-    "tsx": "^4.7.2",
-    "typescript": "^5.4.5"
-  },
+  "files": [
+    "./dist"
+  ],
   "exports": {
     ".": {
       "default": "./dist/index.js",
@@ -30,5 +23,23 @@
       "default": "./dist/auth0/index.js",
       "types": "./dist/auth0/index.d.ts"
     }
+  },
+  "dependencies": {
+    "cookie": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.137",
+    "@types/cookie": "^0.6.0",
+    "@types/node": "^20.12.7",
+    "esbuild": "^0.20.2",
+    "http-assert-plus": "^2.0.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "10.x"
   }
 }
