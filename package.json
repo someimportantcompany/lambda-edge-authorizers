@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npm -ws run build --if-present"
+    "build": "run-s build:*",
+    "build:core": "npm --workspace packages/lambda-edge-authorizers run build --if-present",
+    "build:examples": "npm --workspace packages/example-* run build --if-present"
   },
   "workspaces": [
     "packages/*"

@@ -52,14 +52,6 @@ resource "aws_lambda_function" "this" {
   filename         = data.archive_file.this.output_path
   source_code_hash = data.archive_file.this.output_base64sha256
   publish          = true
-
-  environment {
-    variables = {
-      AUTH0_CLIENT_ID = var.auth0_client_id
-      AUTH0_CLIENT_SECRET = var.auth0_client_secret
-      AUTH0_DOMAIN = var.auth0_domain
-    }
-  }
 }
 
 output "lambda_function" {
