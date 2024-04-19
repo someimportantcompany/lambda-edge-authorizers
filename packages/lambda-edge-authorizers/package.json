@@ -1,0 +1,25 @@
+{
+  "name": "lambda-edge-authorizers",
+  "description": "Protect Cloudfront resources behind authentication services",
+  "version": "0.1.0",
+  "main": "./dist",
+  "scripts": {
+    "build": "run-s build:*",
+    "build:clean": "rimraf ./dist",
+    "build:lib": "tsc",
+    "build:ts": "tsc --declaration --emitDeclarationOnly"
+  },
+  "files": [
+    "./dist"
+  ],
+  "dependencies": {
+    "cookie": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/cookie": "^0.6.0"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "10.x"
+  }
+}

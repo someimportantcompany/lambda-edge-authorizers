@@ -1,38 +1,19 @@
 {
-  "name": "lambda-edge-authorizers",
+  "name": "@lambda-edge-authorizers/repo",
   "description": "Protect Cloudfront resources behind authentication services",
   "version": "0.1.0",
-  "main": "./dist",
+  "private": true,
   "scripts": {
-    "build": "run-s build:*",
-    "build:clean": "rimraf ./dist",
-    "build:core": "esbuild src/index.ts --platform=node --target=node16 --format=cjs --outdir=dist/",
-    "build:lib": "esbuild src/lib/*.ts --bundle --platform=node --target=node16 --format=cjs --outdir=dist/lib/",
-    "build:handlers": "esbuild src/handlers/*.ts --bundle --platform=node --target=node16 --format=cjs --outdir=dist/handlers/",
-    "build:ts": "tsc --declaration --emitDeclarationOnly"
+    "build": "npm -ws run build --if-present"
   },
-  "files": [
-    "./dist"
+  "workspaces": [
+    "packages/*"
   ],
-  "exports": {
-    ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./auth0": {
-      "default": "./dist/auth0/index.js",
-      "types": "./dist/auth0/index.d.ts"
-    }
-  },
-  "dependencies": {
-    "cookie": "^0.6.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/aws-lambda": "^8.10.137",
-    "@types/cookie": "^0.6.0",
     "@types/node": "^20.12.7",
     "esbuild": "^0.20.2",
-    "http-assert-plus": "^2.0.1",
     "npm-run-all": "^4.1.5",
     "rimraf": "^5.0.5",
     "tsx": "^4.7.2",

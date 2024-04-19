@@ -3,48 +3,71 @@ variable "prefix" {
   default = "lambda-edge-authorizer"
 }
 
+variable "service" {
+  type    = string
+  default = "auth0"
+}
+
 locals {
   functions = [ "auth0" ]
 }
 
-data "aws_iam_policy_document" "assume_role" {
+resource "random_id" "lambda" {
+  byte_length = 4
+  keepers = {
+    service = var.service
+  }
+}
+
+data "aws_iam_policy_document" "lambda" {
   statement {
     effect = "Allow"
 
     principals {
       type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+      identifiers = ["lambda.amazonaws.com", "edgelambda.amazonaws.com"]
     }
 
     actions = ["sts:AssumeRole"]
   }
 }
 
-resource "aws_iam_role" "edge-authorizer-role" {
-  name               = "${var.prefix}-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+resource "aws_iam_role" "lambda" {
+  name                = "${var.prefix}-role"
+  assume_role_policy  = data.aws_iam_policy_document.lambda.json
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 }
 
-data "archive_file" "archives" {
-  for_each    = toset(local.functions)
+data "archive_file" "this" {
   type        = "zip"
-  source_file = "../dist/handlers/${each.key}.js"
-  output_path = ".terraform/handlers/${each.key}.zip"
+  source_file = "../dist/handlers/${random_id.lambda.keepers.service}.js"
+  output_path = ".terraform/handler.zip"
 }
 
-resource "aws_lambda_function" "authorizers" {
-  for_each    = toset(local.functions)
-  runtime       = "nodejs18.x"
-  function_name = "${var.prefix}-${each.key}"
-  role          = aws_iam_role.edge-authorizer-role.arn
-  handler       = "index.handler"
+resource "aws_lambda_function" "this" {
+  runtime          = "nodejs18.x"
+  function_name    = "${var.prefix}-${random_id.lambda.keepers.service}-${random_id.lambda.hex}"
+  role             = aws_iam_role.lambda.arn
+  handler          = "${random_id.lambda.keepers.service}.handler"
+  filename         = data.archive_file.this.output_path
+  source_code_hash = data.archive_file.this.output_base64sha256
+  publish          = true
 
-  filename         = data.archive_file.archives[each.key].output_path
-  source_code_hash = data.archive_file.archives[each.key].output_base64sha256
+  environment {
+    variables = {
+      AUTH0_CLIENT_ID = var.auth0_client_id
+      AUTH0_CLIENT_SECRET = var.auth0_client_secret
+      AUTH0_DOMAIN = var.auth0_domain
+    }
+  }
 }
 
-output "functions" {
-  value = [
-    for fn in aws_lambda_function.authorizers : fn.arn
-  ]
+output "lambda_function" {
+  value = aws_lambda_function.this.function_name
+}
+output "lambda_function_arn" {
+  value = aws_lambda_function.this.arn
+}
+output "lambda_function_qualified_arn" {
+  value = aws_lambda_function.this.qualified_arn
 }
