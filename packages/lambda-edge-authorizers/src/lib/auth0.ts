@@ -1,29 +1,31 @@
-import type { CloudFrontRequest, CloudFrontRequestResult } from 'aws-lambda';
+import type { CloudFrontRequest, CloudFrontResponse } from 'aws-lambda';
 
 import { getCookies, infoLog } from '../utils';
 
 export interface Auth0AuthorizerOpts {
-  callbackPath?: string,
+  clientId: string,
+  clientSecret: string,
+  domain: string,
 
+  callbackPath?: string,
   loginStartPath?: string,
   loginCallbackPath?: string,
   logoutPath?: string,
 }
 
-export const auth0DefaultOpts = {
-  callbackPath: process.env.CALLBACK_PATH ?? '/',
+export async function handleAuth0Authorizer(req: CloudFrontRequest, opts: Auth0AuthorizerOpts):
+Promise<CloudFrontResponse | undefined> {
+  const config: Auth0AuthorizerOpts = {
+    callbackPath: '/',
+    loginStartPath: '/auth/login',
+    loginCallbackPath: '/auth/callback',
+    logoutPath: '/auth/logout',
 
-  loginStartPath: process.env.AUTH0_LOGIN_START_PATH ?? '/auth/login',
-  loginCallbackPath: process.env.AUTH0_LOGIN_CALLBACK_PATH ?? '/auth/callback',
-  logoutPath: process.env.AUTH0_LOGOUT_PATH ?? '/auth/logout',
-};
-
-export function handleAuth0Authorizer(req: CloudFrontRequest, overrides?: Auth0AuthorizerOpts):
-CloudFrontRequestResult | Promise<CloudFrontRequestResult> {
-  const opts = { ...auth0DefaultOpts, ...overrides };
+    ...opts,
+  };
   const cookies = getCookies(req);
 
-  infoLog({ req, cookies, opts });
+  infoLog({ req, cookies, config });
 
   // shouldRedirectToLogin if
   // - Path is login start
@@ -35,5 +37,5 @@ CloudFrontRequestResult | Promise<CloudFrontRequestResult> {
   // If shouldRedirectToLogin
   // Redirect
 
-  return req;
+  return undefined;
 }

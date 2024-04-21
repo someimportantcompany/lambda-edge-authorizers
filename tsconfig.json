@@ -23,5 +23,5 @@
     "noImplicitOverride": true,
     "skipLibCheck": true
   },
-  "exclude": [ "node_modules", "./cdk.ts", "./Pulumi.ts" ]
+  "exclude": [ "node_modules" ]
 }

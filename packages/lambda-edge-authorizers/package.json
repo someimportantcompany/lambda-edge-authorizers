@@ -2,7 +2,7 @@
   "name": "lambda-edge-authorizers",
   "description": "Protect Cloudfront resources behind authentication services",
   "version": "0.1.0",
-  "main": "./dist",
+  "main": "./dist/",
   "scripts": {
     "build": "run-s build:*",
     "build:clean": "rimraf ./dist",
@@ -21,5 +21,19 @@
   "engines": {
     "node": "18.x",
     "npm": "10.x"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./auth0": {
+      "import": "./dist/lib/auth0.js",
+      "require": "./dist/lib/auth0.js",
+      "default": "./dist/lib/auth0.js",
+      "types": "./dist/lib/auth0.d.ts"
+    }
   }
 }
