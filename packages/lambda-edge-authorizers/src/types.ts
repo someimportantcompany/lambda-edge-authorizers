@@ -1,4 +1,5 @@
-import { CookieSerializeOptions } from 'cookie';
+import type { CloudFrontRequest, CloudFrontResultResponse } from 'aws-lambda';
+import type { CookieSerializeOptions } from 'cookie';
 
 export interface CookieOpts {
   name: string,
@@ -15,4 +16,8 @@ export interface CookieOpts {
    * @example "10m"
    */
   expires?: string | undefined,
+}
+
+export interface AuthorizerFn {
+  (req: CloudFrontRequest): Promise<CloudFrontResultResponse | undefined>,
 }

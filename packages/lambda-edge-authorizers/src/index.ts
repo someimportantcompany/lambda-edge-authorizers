@@ -1,2 +1,3 @@
-export * from './lib/auth0';
+export * from './oauth';
+export * from './oauth-providers';
 export type * from './types';

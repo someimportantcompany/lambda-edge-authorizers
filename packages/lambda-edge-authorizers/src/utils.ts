@@ -16,6 +16,20 @@ export function assert(value: unknown, err: unknown, additional?: Record<string,
   }
 }
 
+export function concatUrl(...segments: string[]): string {
+  return segments.reduce((url, next) => {
+    if (next.startsWith('http://') || next.startsWith('https://')) {
+      return next;
+    } else if (url.endsWith('/') && next.startsWith('/')) {
+      return `${url}${next.slice(1)}`;
+    } else if (url.endsWith('/') || next.startsWith('/')) {
+      return `${url}${next}`;
+    } else {
+      return `${url}/${next}`;
+    }
+  });
+}
+
 export function getHeader(req: CloudFrontRequest, key: string): string | undefined {
   const values = req.headers[key] ?? req.headers[key.toLowerCase()] ?? [];
   const { value } = values.find(r => r.value) ?? {};
@@ -96,7 +110,24 @@ function formatLog(level: string, log: LogMessage): string {
     };
   }
 
-  return JSON.stringify({ level, ...log, ...formatted });
+  return JSON.stringify({ level, ...log, ...formatted }, safeCyclesSet());
+}
+
+/**
+ * @link https://github.com/trentm/node-bunyan/blob/5c2258ecb1d33ba34bd7fbd6167e33023dc06e40/lib/bunyan.js#L1156
+ */
+function safeCyclesSet() {
+  var seen = new Set();
+  return function (_key: string, val: unknown) {
+    if (!val || typeof (val) !== 'object') {
+      return val;
+    } else if (seen.has(val)) {
+      return '[Circular]';
+    } else {
+      seen.add(val);
+      return val;
+    }
+  };
 }
 
 export function debugLog(log: LogMessage): void {
