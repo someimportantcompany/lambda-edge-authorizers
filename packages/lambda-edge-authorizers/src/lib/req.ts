@@ -46,7 +46,7 @@ export function getSelfBaseUrl(req: CloudFrontRequest): string {
 export function createRedirectResponse(url: string, opts?: {
   cookies?: Record<string, CookieSerializeOptions> | undefined,
   headers?: CloudFrontResultResponse['headers'] | undefined,
-  query?: Record<string, string> | undefined,
+  query?: Record<string, string | number | boolean | undefined> | undefined,
 }): CloudFrontResultResponse {
   const location = opts?.query === undefined ? url : `${url}?${qsStringify(opts!.query)}`;
 

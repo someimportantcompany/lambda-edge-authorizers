@@ -1,8 +1,7 @@
 import axios from 'axios';
 import ms from 'ms';
 import qs from 'qs';
-// import { aesEncrypt, aesDecrypt } from '@someimportantcompany/utils';
-import { assert } from '@someimportantcompany/utils';
+import { assert, tryCatch } from '@someimportantcompany/utils';
 
 import { readCookieValue, writeCookieValue } from './lib/cookies';
 import { createJwksClient, verifyTokenWithJwks } from './lib/jwts';
@@ -112,13 +111,19 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
 
     const cookies = getCookies(req);
 
-    let token = typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
-      ? readCookieValue<OauthResponse>(cookies[config.cookie.name!]!, config.cookie.secret)
+    const token = typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
+      ? tryCatch(() => readCookieValue<OauthResponse>(cookies[config.cookie.name!]!, config.cookie.secret), () => undefined)
       : undefined;
 
-    infoLog({ config, req, cookies, token });
-
     // Validate auth token
+    const details = (jwksClient && token?.id_token) ?
+      await verifyTokenWithJwks(jwksClient, token.id_token, { algorithms: ['HS256', 'RS256'] })
+        .catch(err => errorLog({ err }))
+      : undefined;
+
+    const isLoggedIn = (jwksClient && token?.id_token) ? Boolean(details) : Boolean(token);
+
+    infoLog({ config, req, cookies, token, details, isLoggedIn });
 
     if (req.uri === config.loginStartEndpoint) {
       return createRedirectResponse(config.oauthAuthorize.endpoint, {
@@ -140,7 +145,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         const { code } = qs.parse(req.querystring);
         assert(code, 'Missing code from query', { code: 'req_missing_code', status: 400 });
 
-        token = await oauth.request<{}, OauthResponse>({
+        const newToken = await oauth.request<{}, OauthResponse>({
           method: 'POST',
           url: endpoint,
           headers: {
@@ -161,8 +166,8 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           validateStatus: status => status === 200,
         });
 
-        if (jwksClient && token?.id_token) {
-          const details = await verifyTokenWithJwks(jwksClient, token.id_token, { algorithms: ['HS256', 'RS256'] })
+        if (jwksClient && newToken?.id_token) {
+          const details = await verifyTokenWithJwks(jwksClient, newToken.id_token, { algorithms: ['HS256', 'RS256'] })
             .catch(err => errorLog({ err }));
           infoLog({ token, details });
         }
@@ -171,7 +176,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           cookies: {
             [config.cookie.name!]: {
               ...config.cookie,
-              value: writeCookieValue(token!, config.cookie.secret),
+              value: writeCookieValue(newToken, config.cookie.secret),
             },
           },
         });
@@ -189,6 +194,10 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           }
         }
       });
+    }
+
+    if (!isLoggedIn) {
+      return createRedirectResponse(concatUrl(config.baseUrl, config.loginStartEndpoint));
     }
 
     return undefined;
