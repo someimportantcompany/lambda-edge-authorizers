@@ -6,6 +6,11 @@ const authorizer = createAuth0Provider({
   auth0ClientId: process.env.AUTH0_CLIENT_ID!,
   auth0ClientSecret: process.env.AUTH0_CLIENT_SECRET!,
   auth0Domain: process.env.AUTH0_DOMAIN!,
+  cookie: {
+    secret: 'be9a8bfe32efbe608564adccf62fc2b5',
+    httpOnly: true,
+    secure: true,
+  },
 });
 
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {

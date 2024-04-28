@@ -2,8 +2,12 @@ import type { CloudFrontRequest, CloudFrontResultResponse } from 'aws-lambda';
 import type { CookieSerializeOptions } from 'cookie';
 
 export interface CookieOpts {
-  name: string,
+  name?: string,
+  secret?: string,
+
   domain?: CookieSerializeOptions['domain'],
+  path?: CookieSerializeOptions['path'],
+  httpOnly?: CookieSerializeOptions['httpOnly'],
   sameSite?: CookieSerializeOptions['sameSite'],
   secure?: CookieSerializeOptions['secure'],
 
