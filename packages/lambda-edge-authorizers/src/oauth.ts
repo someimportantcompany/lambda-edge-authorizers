@@ -5,8 +5,9 @@ import { assert, tryCatch } from '@someimportantcompany/utils';
 
 import { readCookieValue, writeCookieValue } from './lib/cookies';
 import { createJwksClient, verifyTokenWithJwks } from './lib/jwts';
-import { concatUrl, getCookies, createRedirectResponse, getSelfBaseUrl } from './lib/req';
-import { infoLog, errorLog } from './lib/utils';
+import { concatUrl, getCookies, createResponse, createRedirectResponse, getSelfBaseUrl } from './lib/req';
+import { renderErrorPage, renderLogoutPage } from './lib/template';
+import { debugLog, infoLog, errorLog } from './lib/utils';
 import type { CookieOpts, AuthorizerFn } from './types';
 
 export interface OauthAuthorizerOpts {
@@ -38,6 +39,7 @@ interface OauthResponse {
   token_type: string,
   access_token: string,
   id_token?: string,
+  refresh_token?: string,
   expires_in?: number,
   scope?: string,
 }
@@ -63,8 +65,9 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         response: { status, headers, data },
         err,
       });
-      assert(false, err?.response?.data?.error_description, {
-        code: err?.response?.data?.error_code ?? undefined,
+      assert(false, 'An error occurred', {
+        err_code: err?.response?.data?.error_code ?? err?.response?.data?.error ?? undefined,
+        err_description: err?.response?.data?.error_description,
         res: { status, headers, data },
       });
     } else {
@@ -105,6 +108,8 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
       cookie: {
         name: 'auth',
         path: '/',
+        httpOnly: true,
+        secure: true,
         ...opts.cookie,
       },
     };
@@ -123,7 +128,8 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
 
     const isLoggedIn = (jwksClient && token?.id_token) ? Boolean(details) : Boolean(token);
 
-    infoLog({ config, req, cookies, token, details, isLoggedIn });
+    infoLog({ config, req, cookies, token, isLoggedIn });
+    debugLog({ details });
 
     if (req.uri === config.loginStartEndpoint) {
       return createRedirectResponse(config.oauthAuthorize.endpoint, {
@@ -169,30 +175,56 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         if (jwksClient && newToken?.id_token) {
           const details = await verifyTokenWithJwks(jwksClient, newToken.id_token, { algorithms: ['HS256', 'RS256'] })
             .catch(err => errorLog({ err }));
-          infoLog({ token, details });
+          debugLog({ token, details });
         }
 
         return createRedirectResponse(concatUrl(config.baseUrl, config.callbackEndpoint), {
           cookies: {
             [config.cookie.name!]: {
+              // By default, set the cookie to expire when this access token should
+              ...(typeof newToken.expires_in === 'number' ? { expires: `${newToken.expires_in}s` } : undefined),
+              // But this could be overwritten by the developer
               ...config.cookie,
+              // And embed the OauthResponse into the cookie
               value: writeCookieValue(newToken, config.cookie.secret),
             },
           },
         });
-      } catch (err) {
+      } catch (err: any) {
         errorLog({ err });
+        return createResponse({
+          status: '500',
+          headers: {
+            contentType: [ { key: 'Content-Type', value: 'text/html' } ],
+          },
+          cookies: {
+            [config.cookie.name!]: {
+              ...config.cookie,
+              value: null,
+            },
+          },
+          body: renderErrorPage({
+            title: 'An error occurred',
+            description: err.err_description ?? 'Something went wrong trying to sign-in',
+            code: err.err_code ?? undefined,
+          }),
+        });
       }
     }
 
     if (req.uri === config.logoutEndpoint) {
-      return createRedirectResponse(concatUrl(config.baseUrl, config.callbackEndpoint), {
+      return createResponse({
+        status: '200',
+        headers: {
+          'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+        },
         cookies: {
           [config.cookie.name!]: {
             ...config.cookie,
             value: null,
-          }
-        }
+          },
+        },
+        body: renderLogoutPage(),
       });
     }
 

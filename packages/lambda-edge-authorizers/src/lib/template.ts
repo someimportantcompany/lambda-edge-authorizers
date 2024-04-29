@@ -1,8 +1,9 @@
 export function renderPage(page: {
   title: string,
   hero?: {
-    title?: string,
+    title?: string | undefined,
     description: string,
+    subtext?: string | undefined,
   },
 }): string {
   return /* HTML */`
@@ -14,7 +15,7 @@ export function renderPage(page: {
     <body>
       <h1>${page.hero?.title}</h1>
       <p>${page.hero?.description}</p>
-      <p>${page.hero?.subtext}</p>
+      ${page.hero?.subtext && `<p>${page.hero?.subtext}</p>`}
     </body>
     </html>
   `
@@ -33,13 +34,14 @@ export function renderLogoutPage() {
 export function renderErrorPage(err: {
   title: string,
   description: string,
-  code?: string,
+  code?: string | undefined,
 }) {
   return renderPage({
     title: 'An error occurred',
     hero: {
       title: err.title,
       description: err.description,
+      subtext: err.code ? `(Error: ${err.code})` : undefined,
     }
   })
 }

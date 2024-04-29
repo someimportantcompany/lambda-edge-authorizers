@@ -1,14 +1,24 @@
+import { createHash } from "crypto";
+
 interface LogMessage {
   event?: string,
   userId?: string,
   err?: Error | unknown | string,
   [key: string]: string | number | boolean | Date | any[] | Record<string, any> | unknown,
+  correlationId?: never,
   level?: never,
 }
 
 const showDebug = process.env.LOG_DEBUG === 'true';
 
+function getCorrelationId() {
+  return process.env._X_AMZN_TRACE_ID
+    ? createHash('md5').update(process.env._X_AMZN_TRACE_ID).digest('hex')
+    : undefined;
+}
+
 function formatLog(level: string, log: LogMessage): string {
+  const correlationId = getCorrelationId();
   const formatted: Record<string, any> = {};
 
   if (log.err instanceof Error) {
@@ -19,7 +29,7 @@ function formatLog(level: string, log: LogMessage): string {
     };
   }
 
-  return JSON.stringify({ level, ...log, ...formatted }, safeCyclesSet());
+  return JSON.stringify({ level, correlationId, ...log, ...formatted }, safeCyclesSet());
 }
 
 /**

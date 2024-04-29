@@ -1,3 +1,4 @@
+import httpStatus from 'statuses';
 import ms from 'ms';
 import * as cookie from 'cookie';
 import { stringify as qsStringify } from 'qs';
@@ -43,20 +44,18 @@ export function getSelfBaseUrl(req: CloudFrontRequest): string {
   return `https://${host}`;
 }
 
-export function createRedirectResponse(url: string, opts?: {
-  cookies?: Record<string, CookieSerializeOptions> | undefined,
+export function createResponse(res: {
+  status: `${number}`,
   headers?: CloudFrontResultResponse['headers'] | undefined,
-  query?: Record<string, string | number | boolean | undefined> | undefined,
+  cookies?: Record<string, CookieSerializeOptions> | undefined,
+  body?: string | undefined,
 }): CloudFrontResultResponse {
-  const location = opts?.query === undefined ? url : `${url}?${qsStringify(opts!.query)}`;
-
   return {
-    status: '302',
-    statusDescription: 'Found',
+    status: res.status,
+    statusDescription: httpStatus(res.status),
     headers: {
-      location: [ { key: 'Location', value: location } ],
-      ...(opts?.cookies && {
-        'set-cookie': Object.entries(opts.cookies).map(([ name, { value, ...opts } ]) => {
+      ...(res?.cookies && {
+        'set-cookie': Object.entries(res.cookies).map(([ name, { value, ...opts } ]) => {
           const expiresInSecs = typeof opts.expires === 'string' ? ms(opts.expires) : undefined;
 
           const expires = (value !== null && expiresInSecs !== undefined)
@@ -74,9 +73,26 @@ export function createRedirectResponse(url: string, opts?: {
           };
         }),
       }),
-      ...opts?.headers,
+      ...res?.headers,
     },
-    body: `Redirecting to: ${location}`,
-    bodyEncoding: 'text',
+    ...(typeof res.body === 'string' && {
+      body: res.body,
+      bodyEncoding: 'text',
+    }),
   };
+}
+
+export function createRedirectResponse(url: string, opts?: {
+  cookies?: Record<string, CookieSerializeOptions> | undefined,
+  headers?: CloudFrontResultResponse['headers'] | undefined,
+  query?: Record<string, string | number | boolean | undefined> | undefined,
+}): ReturnType<typeof createResponse> {
+  const location = opts?.query === undefined ? url : `${url}?${qsStringify(opts!.query)}`;
+
+  return createResponse({
+    status: '302',
+    cookies: opts?.cookies,
+    headers: { location: [ { key: 'Location', value: location } ] },
+    body: `Redirecting to: ${location}`,
+  });
 }
