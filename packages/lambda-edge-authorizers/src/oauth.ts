@@ -21,11 +21,16 @@ export interface OauthAuthorizerOpts {
     endpoint: string,
     userAgent?: string,
   },
-  oauthIdToken?: undefined | {
+  oauthIdToken?: {
     jwksEndpoint: string,
     headers?: Record<string, string | number | boolean | undefined>,
     userAgent?: string,
-  },
+  } | undefined,
+
+  oauthLogoutEndpoint?: {
+    endpoint: string,
+    query?: Record<string, string | number | boolean | undefined>,
+  } | undefined,
 
   baseUrl?: string,
   callbackEndpoint?: string,
@@ -102,6 +107,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
       logoutEndpoint: '/auth/logout',
 
       oauthIdToken: undefined,
+      oauthLogoutEndpoint: undefined,
 
       ...opts,
 
@@ -132,7 +138,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
     debugLog({ details });
 
     if (req.uri === config.loginStartEndpoint) {
-      return createRedirectResponse(config.oauthAuthorize.endpoint, {
+      const response = createRedirectResponse(config.oauthAuthorize.endpoint, {
         query: {
           client_id: config.oauthClientId,
           response_type: 'code',
@@ -141,6 +147,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           // state={state}
         },
       });
+      return { response };
     }
 
     if (req.uri === config.loginCallbackEndpoint) {
@@ -178,7 +185,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           debugLog({ token, details });
         }
 
-        return createRedirectResponse(concatUrl(config.baseUrl, config.callbackEndpoint), {
+        const response = createRedirectResponse(concatUrl(config.baseUrl, config.callbackEndpoint), {
           cookies: {
             [config.cookie.name!]: {
               // By default, set the cookie to expire when this access token should
@@ -190,9 +197,10 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             },
           },
         });
+        return { response };
       } catch (err: any) {
         errorLog({ err });
-        return createResponse({
+        const response = createResponse({
           status: '500',
           headers: {
             contentType: [ { key: 'Content-Type', value: 'text/html' } ],
@@ -208,29 +216,45 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             code: err.err_code ?? undefined,
           }),
         });
+        return { response };
       }
     }
 
     if (req.uri === config.logoutEndpoint) {
-      return createResponse({
-        status: '200',
-        headers: {
-          'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
-        },
-        cookies: {
-          [config.cookie.name!]: {
-            ...config.cookie,
-            value: null,
+      if (config.oauthLogoutEndpoint?.endpoint) {
+        const response = createRedirectResponse(config.oauthLogoutEndpoint.endpoint, {
+          cookies: {
+            [config.cookie.name!]: {
+              ...config.cookie,
+              value: null,
+            },
           },
-        },
-        body: renderLogoutPage(),
-      });
+          query: config.oauthAuthorize?.query,
+        });
+        return { response };
+      } else {
+        const response = createResponse({
+          status: '200',
+          headers: {
+            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+          },
+          cookies: {
+            [config.cookie.name!]: {
+              ...config.cookie,
+              value: null,
+            },
+          },
+          body: renderLogoutPage(),
+        });
+        return { response };
+      }
     }
 
     if (!isLoggedIn) {
-      return createRedirectResponse(concatUrl(config.baseUrl, config.loginStartEndpoint));
+      const response = createRedirectResponse(concatUrl(config.baseUrl, config.loginStartEndpoint));
+      return { response };
     }
 
-    return undefined;
+    return { response: undefined };
   };
 }

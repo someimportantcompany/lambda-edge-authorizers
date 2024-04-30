@@ -13,6 +13,6 @@ const authorizer = createAuth0Provider({
 
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
   const { request } = event.Records[0].cf;
-  const response = await authorizer(request);
+  const { response } = await authorizer(request);
   return response ?? request;
 }

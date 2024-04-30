@@ -23,5 +23,7 @@ export interface CookieOpts {
 }
 
 export interface AuthorizerFn {
-  (req: CloudFrontRequest): Promise<CloudFrontResultResponse | undefined>,
+  (request: CloudFrontRequest): Promise<{
+    response: CloudFrontResultResponse | undefined,
+  }>,
 }
