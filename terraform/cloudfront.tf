@@ -48,10 +48,11 @@ resource "aws_s3_object" "this" {
   source = "./index.html"
   etag   = filemd5("./index.html")
 
-  bucket       = aws_s3_bucket.this.bucket
-  key          = "index.html"
-  acl          = "private"
-  content_type = "text/html"
+  bucket        = aws_s3_bucket.this.bucket
+  key           = "index.html"
+  acl           = "private"
+  content_type  = "text/html"
+  cache_control = "private, no-store"
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {

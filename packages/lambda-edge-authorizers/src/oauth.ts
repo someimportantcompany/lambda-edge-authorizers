@@ -204,7 +204,6 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             },
           },
           body: renderErrorPage({
-            title: 'An error occurred',
             description: err.err_description ?? 'Something went wrong trying to sign-in',
             code: err.err_code ?? undefined,
           }),
