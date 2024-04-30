@@ -84,15 +84,13 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 
 ## Authorizers
 
-### OAuth Providers
+### Auth0
 
-#### Auth0
-
-Key | Description
+Argument | Description
 ---- | ----
-`auth0ClientId` | **Required** Auth0 Client ID
-`auth0ClientSecret` | **Required** Auth0 Client Secret
-`auth0Domain` | **Required** Auth0 Tenant Domain
+`auth0ClientId` | **Required** - Auth0 Client ID
+`auth0ClientSecret` | **Required** - Auth0 Client Secret
+`auth0Domain` | **Required** - Auth0 Tenant Domain
 
 ```ts
 import { createAuth0Provider } from 'lambda-edge-authorizers';
