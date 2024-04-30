@@ -1,0 +1,78 @@
+import { assert } from '@someimportantcompany/utils';
+
+import { createOauthProvider, OauthAuthorizerOpts } from './oauth';
+
+interface RemoveAuthorizerOpts {
+  oauthClientId: string,
+  oauthClientSecret: string,
+}
+interface ModifyAuthorizerOpts {
+  oauthAuthorize?: Omit<OauthAuthorizerOpts['oauthAuthorize'], 'endpoint'>,
+  oauthTokenExchange?: Omit<OauthAuthorizerOpts['oauthTokenExchange'], 'endpoint'>,
+}
+
+interface GenericAuthorizerOpts extends
+  Omit<OauthAuthorizerOpts, keyof RemoveAuthorizerOpts | keyof ModifyAuthorizerOpts>,
+  ModifyAuthorizerOpts {}
+
+export interface Auth0AuthorizerOpts extends GenericAuthorizerOpts {
+  auth0ClientId: string,
+  auth0ClientSecret: string,
+  auth0Domain: string,
+  auth0Scopes?: string[],
+}
+
+export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
+  assert(!opts.auth0Domain.startsWith('http://') && !opts.auth0Domain.startsWith('https://'),
+    'Expected auth0Domain to not start with http(s)://');
+
+  return createOauthProvider({
+    oauthClientId: opts.auth0ClientId,
+    oauthClientSecret: opts.auth0ClientSecret,
+    ...opts,
+
+    oauthAuthorize: {
+      ...opts.oauthAuthorize,
+      endpoint: `https://${opts.auth0Domain}/authorize`,
+      query: {
+        scope: [ 'openid', 'email' ].concat(opts.auth0Scopes ?? []).join(' '),
+        ...opts.oauthAuthorize?.query,
+      },
+    },
+    oauthTokenExchange: {
+      endpoint: `https://${opts.auth0Domain}/oauth/token`,
+      ...opts.oauthTokenExchange,
+    },
+    oauthIdToken: {
+      jwksEndpoint: `https://${opts.auth0Domain}/.well-known/jwks.json`,
+      ...opts.oauthIdToken,
+    },
+  });
+}
+
+export interface GoogleAuthorizerOpts extends GenericAuthorizerOpts {
+  googleClientId: string,
+  googleClientSecret: string,
+  googleScopes: string[],
+}
+
+export function createGoogleProvider(opts: GoogleAuthorizerOpts) {
+  return createOauthProvider({
+    oauthClientId: opts.googleClientId,
+    oauthClientSecret: opts.googleClientSecret,
+    ...opts,
+
+    oauthAuthorize: {
+      endpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      ...opts.oauthAuthorize,
+    },
+    oauthTokenExchange: {
+      endpoint: 'https://oauth2.googleapis.com/token',
+      ...opts.oauthTokenExchange,
+    },
+    oauthIdToken: {
+      jwksEndpoint: 'https://www.googleapis.com/oauth2/v3/certs',
+      ...opts.oauthIdToken,
+    },
+  });
+}

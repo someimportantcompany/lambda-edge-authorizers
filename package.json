@@ -1,0 +1,30 @@
+{
+  "name": "@lambda-edge-authorizers/repo",
+  "description": "Protect Cloudfront resources behind authentication services",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "run-s build:*",
+    "build:lib": "npm --workspace packages/lambda-edge-authorizers run build --if-present",
+    "build:examples": "npm --workspace packages/lambda-example-* run build --if-present"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.137",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^20.12.7",
+    "dotenv": "^16.4.5",
+    "esbuild": "^0.20.2",
+    "minimist": "^1.2.8",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "10.x"
+  }
+}

@@ -1,0 +1,11 @@
+cdk.out/
+dist/
+node_modules/
+packages/*/*.dist.js
+packages/*/*-dist.js
+terraform/.terraform*
+terraform/*.tfstate*
+terraform/*.tfvars*
+terraform/*.zip
+*.DS_Store
+.envrc
