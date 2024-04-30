@@ -4,12 +4,12 @@ variable "prefix" {
 }
 
 variable "service" {
-  type    = string
-  default = "auth0"
-}
+  type = string
 
-locals {
-  functions = [ "auth0" ]
+  validation {
+    condition     = contains(["auth0"], var.service)
+    error_message = "Valid values for var.service: auth0"
+  }
 }
 
 resource "random_id" "lambda" {
