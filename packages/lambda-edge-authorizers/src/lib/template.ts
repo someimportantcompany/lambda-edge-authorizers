@@ -17,7 +17,7 @@ export function renderPage(page: {
       <div class="text-center mx-auto my-5 px-3" style="max-width: 512px;">
         ${page.title ? `<h1 class="h4 mb-3 font-weight-normal">${page.title}</h1>` : ''}
         ${page.description ? `<p>${page.description}</p>` : ''}
-        ${page.subtext ? `<p class="text-muted text-small">${page.subtext}</p>` : ''}
+        ${page.subtext ? `<p class="text-muted text-small text-uppercase">${page.subtext}</p>` : ''}
       </div>
     </body>
     </html>

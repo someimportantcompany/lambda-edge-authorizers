@@ -2,12 +2,13 @@ import axios from 'axios';
 import ms from 'ms';
 import qs from 'qs';
 import { assert, tryCatch } from '@someimportantcompany/utils';
+import type { Algorithm } from 'jsonwebtoken';
 
 import { readCookieValue, writeCookieValue } from './lib/cookies';
 import { createJwksClient, verifyTokenWithJwks } from './lib/jwts';
 import { concatUrl, getCookies, createResponse, createRedirectResponse, getSelfBaseUrl } from './lib/req';
 import { renderErrorPage, renderLogoutPage } from './lib/template';
-import { debugLog, infoLog, errorLog } from './lib/utils';
+import { jsonStringify, formatErr } from './lib/utils';
 import type { CookieOpts, AuthorizerFn } from './types';
 
 export interface OauthAuthorizerOpts {
@@ -23,6 +24,7 @@ export interface OauthAuthorizerOpts {
   },
   oauthIdToken?: {
     jwksEndpoint: string,
+    tokenAlgorithms?: Algorithm[],
     headers?: Record<string, string | number | boolean | undefined>,
     userAgent?: string,
   } | undefined,
@@ -48,38 +50,42 @@ interface OauthResponse {
   expires_in?: number,
   scope?: string,
 }
+interface OauthIdTokenPayload {
+  email: string,
+  [key: string]: string,
+}
 
 export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
   const oauth = axios.create();
 
   oauth.interceptors.response.use(res => {
-    const { config, status, headers, data } = res;
-    const { method, url, headers: reqHeaders, params, data: reqData } = config;
-    infoLog({
-      request: { method, url, headers: reqHeaders, params, data: reqData },
-      response: { status, headers, data },
-    });
+    // const { config, status, headers, data } = res;
+    // const { method, url, headers: reqHeaders, params, data: reqData } = config;
+    // console.log(jsonStringify({
+    //   request: { method, url, headers: reqHeaders, params, data: reqData },
+    //   response: { status, headers, data },
+    // }));
     return res.data;
   }, err => {
-    const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
-
-    if (typeof err?.response?.data?.message === 'string') {
+    if (typeof err?.response?.data?.error_description === 'string') {
       const { status, headers, data } = err.response;
-      errorLog({
-        request: { method, url, headers: reqHeaders, params, data: reqData },
-        response: { status, headers, data },
-        err,
-      });
+      // const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
+      // console.error(jsonStringify({
+      //   request: { method, url, headers: reqHeaders, params, data: reqData },
+      //   response: { status, headers, data },
+      //   err: formatErr(err),
+      // }));
       assert(false, 'An error occurred', {
         err_code: err?.response?.data?.error_code ?? err?.response?.data?.error ?? undefined,
         err_description: err?.response?.data?.error_description,
         res: { status, headers, data },
       });
     } else {
-      errorLog({
-        req: { method, url, headers: reqHeaders, params, data: reqData },
-        err,
-      });
+      // const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
+      // console.error(jsonStringify({
+      //   req: { method, url, headers: reqHeaders, params, data: reqData },
+      //   err: formatErr(err),
+      // }));
     }
 
     throw err;
@@ -126,16 +132,28 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
       ? tryCatch(() => readCookieValue<OauthResponse>(cookies[config.cookie.name!]!, config.cookie.secret), () => undefined)
       : undefined;
 
-    // Validate auth token
-    const details = (jwksClient && token?.id_token) ?
-      await verifyTokenWithJwks(jwksClient, token.id_token, { algorithms: ['HS256', 'RS256'] })
-        .catch(err => errorLog({ err }))
-      : undefined;
+    // Validate ID token if present
+    let idTokenPayload: OauthIdTokenPayload | undefined = undefined;
+    if (jwksClient && token?.id_token) {
+      try {
+        idTokenPayload = await verifyTokenWithJwks<OauthIdTokenPayload>(jwksClient, token.id_token, {
+          algorithms: config.oauthIdToken?.tokenAlgorithms,
+        });
+      } catch (err) {
+        console.error(jsonStringify({
+          err: formatErr(err as Error),
+        }));
+      }
+    }
 
-    const isLoggedIn = (jwksClient && token?.id_token) ? Boolean(details) : Boolean(token);
+    const isLoggedIn = jwksClient && token?.id_token ? Boolean(idTokenPayload?.email) : Boolean(token);
 
-    infoLog({ config, req, cookies, token, isLoggedIn });
-    debugLog({ details });
+    // console.log(jsonStringify({
+    //   config, req, cookies, isLoggedIn,
+    // }));
+    // console.debug(jsonStringify({
+    //   token, idTokenPayload,
+    // }));
 
     if (req.uri === config.loginStartEndpoint) {
       const response = createRedirectResponse(config.oauthAuthorize.endpoint, {
@@ -180,9 +198,12 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         });
 
         if (jwksClient && newToken?.id_token) {
-          const details = await verifyTokenWithJwks(jwksClient, newToken.id_token, { algorithms: ['HS256', 'RS256'] })
-            .catch(err => errorLog({ err }));
-          debugLog({ token, details });
+          idTokenPayload = await verifyTokenWithJwks<OauthIdTokenPayload>(jwksClient, newToken.id_token, {
+            algorithms: config.oauthIdToken?.tokenAlgorithms,
+          });
+          console.debug(jsonStringify({
+            token, idTokenPayload,
+          }));
         }
 
         const response = createRedirectResponse(concatUrl(config.baseUrl, config.callbackEndpoint), {
@@ -199,11 +220,13 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         });
         return { response };
       } catch (err: any) {
-        errorLog({ err });
+        console.error(jsonStringify({
+          err: formatErr(err as Error),
+        }));
         const response = createResponse({
           status: '500',
           headers: {
-            contentType: [ { key: 'Content-Type', value: 'text/html' } ],
+            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
           },
           cookies: {
             [config.cookie.name!]: {

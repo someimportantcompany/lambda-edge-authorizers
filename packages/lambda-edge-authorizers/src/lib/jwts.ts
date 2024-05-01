@@ -1,13 +1,13 @@
-import jwt, { GetPublicKeyOrSecret, JwtPayload, VerifyOptions } from 'jsonwebtoken';
+import jwt, { GetPublicKeyOrSecret, VerifyOptions } from 'jsonwebtoken';
 import createJwksClient, { JwksClient } from 'jwks-rsa';
 
 export { createJwksClient };
 
-export function verifyTokenWithJwks(
+export function verifyTokenWithJwks<T extends Record<string, any>>(
   client: JwksClient,
   token: string,
   options: VerifyOptions = {},
-): Promise<Record<string, any>> {
+): Promise<T> {
   const getKey: GetPublicKeyOrSecret = (header, callback): void => {
     client.getSigningKey(header.kid, function(err, key) {
       if (err) {
@@ -25,7 +25,7 @@ export function verifyTokenWithJwks(
       if (err) {
         reject(err);
       } else {
-        resolve({ ...(decoded as JwtPayload) });
+        resolve(decoded as T);
       }
     });
   });

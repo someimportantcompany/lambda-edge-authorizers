@@ -1,6 +1,8 @@
 cdk.out/
+coverage/
 dist/
 node_modules/
+packages/*/*.tgz
 packages/*/*.dist.js
 packages/*/*-dist.js
 terraform/.terraform*
