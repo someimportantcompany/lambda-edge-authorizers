@@ -7,7 +7,8 @@
     "build": "run-s build:*",
     "build:clean": "rimraf ./dist",
     "build:lib": "tsc",
-    "build:ts": "tsc --declaration --emitDeclarationOnly"
+    "build:ts": "tsc --declaration --emitDeclarationOnly",
+    "test:unit": "jest '\\.test\\.ts$' --config='../../jest.config.js'"
   },
   "repository": "https://github.com/someimportantcompany/lambda-edge-authorizers",
   "bugs": "https://github.com/someimportantcompany/lambda-edge-authorizers/issues",
