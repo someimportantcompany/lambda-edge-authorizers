@@ -7,3 +7,12 @@ Lambda@Edge authorizers for:
 Future thoughts:
 
 - Cognito
+
+TODO //
+
+- Private lambda site
+- Test deploying to all Lambda functions w/ unauthed function URL
+- Cloudfront distribution IaC
+- Test
+- Cloudfront Lambda OaC
+- Test again

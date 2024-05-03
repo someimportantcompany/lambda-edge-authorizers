@@ -1,0 +1,24 @@
+{
+  "name": "@lambda-edge-authorizers/private-site",
+  "description": "Example private site that you could run behind an authorizer",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch ./server.ts"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "10.x"
+  }
+}

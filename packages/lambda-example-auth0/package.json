@@ -3,11 +3,6 @@
   "description": "Protect Cloudfront resources behind authentication services",
   "version": "0.0.0",
   "private": true,
-  "scripts": {
-    "build": "run-s build:*",
-    "build:clean": "rimraf ./index-dist.js",
-    "build:index": "tsx ../build.ts -i index.ts -o index-dist.js"
-  },
   "dependencies": {
     "lambda-edge-authorizers": "../lambda-edge-authorizers"
   },
