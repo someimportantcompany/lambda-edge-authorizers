@@ -45,7 +45,7 @@ export function createStack(app: cdk.App, id: string, opts: {
   });
 
   (o => Object.fromEntries(Object.entries(o).map(([ key, value ]) => ([
-    key, new cdk.CfnOutput(stack, key, { value }),
+    key, new cdk.CfnOutput(stack, key, { key, value }),
   ]))))({
     LambdaRoleArn: lambdaRole.roleArn,
     LambdaAuthorizerArn: lambdaAuthorizer.functionArn,

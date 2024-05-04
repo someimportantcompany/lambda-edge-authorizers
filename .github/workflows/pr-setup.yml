@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     env:
+      CDK_STACK_PREFIX: lambda-edge-authorizer-pr-${{ github.event.number }}
       NODE_ENV: testing
     steps:
       - uses: actions/checkout@v4
@@ -24,5 +25,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run deploy
-        env:
-          CDK_STACK_PREFIX: lambda-edge-authorizer-pr-${{ github.event.number }}
+
+      - name: aws cloudformation describe-stacks --stack-name '$CDK_STACK_PREFIX-*'
+        id: cloudfrontUrls
+        run: |
+          U1="$(aws cloudformation describe-stacks --stack-name '$CDK_STACK_PREFIX-auth0' --query 'Stacks[0].Outputs[?OutputKey==`Url`].OutputValue' --output text)"
+          echo "auth0=$U1" >> "$GITHUB_OUTPUT"
