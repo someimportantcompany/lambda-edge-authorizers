@@ -20,7 +20,7 @@ export function createLambdaPrivateSite(stack: cdk.Stack, opts: {
   });
 
   const lambdaPrivateUrl = lambdaPrivateSite.addFunctionUrl({
-    authType: cdk.aws_lambda.FunctionUrlAuthType.AWS_IAM,
+    authType: cdk.aws_lambda.FunctionUrlAuthType.NONE,
   });
 
   return {

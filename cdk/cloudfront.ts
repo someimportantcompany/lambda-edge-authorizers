@@ -10,15 +10,6 @@ export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
     originId: 'lambda-private-site',
   });
 
-  const oac = new cdk.aws_cloudfront.CfnOriginAccessControl(stack, 'PrivateSiteFunctionUrlOAC', {
-    originAccessControlConfig: {
-      name: "PrivateSiteFunction",
-      originAccessControlOriginType: "lambda",
-      signingBehavior: "always",
-      signingProtocol: "sigv4",
-    },
-  });
-
   const cloudfront = new cdk.aws_cloudfront.Distribution(stack, 'Distribution', {
     comment: opts.resourceName,
     defaultBehavior: {
@@ -36,19 +27,29 @@ export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
     },
   });
 
+  /**
+   * @NOTE Lambda OAC disabled for now as it doesn't appear to support POST/PUT requests 🤦‍♂️
+   */
+  // const oac = new cdk.aws_cloudfront.CfnOriginAccessControl(stack, 'PrivateSiteFunctionUrlOAC', {
+  //   originAccessControlConfig: {
+  //     name: "PrivateSiteFunction",
+  //     originAccessControlOriginType: "lambda",
+  //     signingBehavior: "always",
+  //     signingProtocol: "sigv4",
+  //   },
+  // });
   // Override the OAC ID into the CloudFormation distribution CFN construct
-  (cloudfront.node.defaultChild as cdk.aws_cloudfront.CfnDistribution).addPropertyOverride(
-    'DistributionConfig.Origins.0.OriginAccessControlId',
-    oac.getAtt('Id'),
-  );
-
-  opts.lambdaPrivateSite.grantInvokeUrl(new cdk.aws_iam.ServicePrincipal('cloudfront.amazonaws.com', {
-    conditions: {
-      ArnLike: {
-        'aws:SourceArn': `arn:aws:cloudfront::${cdk.Stack.of(stack).account}:distribution/${cloudfront.distributionId}`,
-      },
-    },
-  }));
+  // (cloudfront.node.defaultChild as cdk.aws_cloudfront.CfnDistribution).addPropertyOverride(
+  //   'DistributionConfig.Origins.0.OriginAccessControlId',
+  //   oac.getAtt('Id'),
+  // );
+  // opts.lambdaPrivateSite.grantInvokeUrl(new cdk.aws_iam.ServicePrincipal('cloudfront.amazonaws.com', {
+  //   conditions: {
+  //     ArnLike: {
+  //       'aws:SourceArn': `arn:aws:cloudfront::${cdk.Stack.of(stack).account}:distribution/${cloudfront.distributionId}`,
+  //     },
+  //   },
+  // }));
 
   return {
     cloudfront,

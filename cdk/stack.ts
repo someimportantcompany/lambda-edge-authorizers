@@ -50,6 +50,7 @@ export function createStack(app: cdk.App, id: string, opts: {
     LambdaRoleArn: lambdaRole.roleArn,
     LambdaAuthorizerArn: lambdaAuthorizer.functionArn,
     LambdaPrivateSiteArn: lambdaPrivateSite.functionArn,
+    LambdaPrivateUrl: lambdaPrivateUrl.url,
     CloudfrontDomain: cloudfront.distributionDomainName,
     Url: cdk.Fn.join('', ['https://', cloudfront.distributionDomainName]),
   });
