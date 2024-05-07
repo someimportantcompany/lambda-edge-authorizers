@@ -4,11 +4,11 @@ A library to intercept Cloudfront `viewer-request` events & redirect the visitor
 
 - Must be deployed as a Lambda@Edge function, see limitations belows
 - Supports any Oauth2 provider, with optional ID token support for more features
-- Includes helper functions for popular providers.
+- Includes helper functions for popular providers:
 
-Provider | Website
+Provider | Documentation
 ---- | ----
-[Auth0](#auth0) | [auth0.com][auth0-getting-started]
+[Auth0](#auth0) | [`auth0.com/docs/get-started`][auth0-getting-started]
 
 ## Install
 
@@ -26,30 +26,52 @@ $ yarn add lambda-edge-authorizers
 
 ```js
 // Javascript
-const { createAuth0Provider } = require('lambda-edge-authorizers');
+const { createOauthProvider } = require('lambda-edge-authorizers');
 
-const authorizer = createAuth0Provider({
-  auth0ClientId: 'your-auth0-client-id',
-  auth0ClientSecret: 'your-auth0-client-secret',
-  auth0Domain: 'your-auth0-tenant.auth0.com',
+const authorizer = createOauthProvider({
+  oauthClientId: 'your-oauth-client-id',
+  oauthClientSecret: 'your-oauth-client-secret',
+  oauthAuthorize: {
+    endpoint: 'https://your-oauth-provider.local/authorize',
+    query: {
+      scope: 'openid email',
+    },
+  },
+  oauthTokenExchange: {
+    endpoint: 'https://your-oauth-provider.local/oauth/token',
+  },
+  oauthIdToken: {
+    jwksEndpoint: 'https://your-oauth-provider.local/.well-known/jwks.json',
+  },
 });
 
 module.exports.handler = async function handler(event) {
   const { request } = event.Records[0].cf;
   const { response } = await authorizer(request);
-  return response ?? request;
+  return response || request;
 }
 ```
 ```ts
 // Typescript
 import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
 
-import { createAuth0Provider } from 'lambda-edge-authorizers';
+import { createOauthProvider } from 'lambda-edge-authorizers';
 
-const authorizer = createAuth0Provider({
-  auth0ClientId: 'your-auth0-client-id',
-  auth0ClientSecret: 'your-auth0-client-secret',
-  auth0Domain: 'your-auth0-tenant.auth0.com',
+const authorizer = createOauthProvider({
+  oauthClientId: 'your-oauth-client-id',
+  oauthClientSecret: 'your-oauth-client-secret',
+  oauthAuthorize: {
+    endpoint: 'https://your-oauth-provider.local/authorize',
+    query: {
+      scope: 'openid email',
+    },
+  },
+  oauthTokenExchange: {
+    endpoint: 'https://your-oauth-provider.local/oauth/token',
+  },
+  oauthIdToken: {
+    jwksEndpoint: 'https://your-oauth-provider.local/.well-known/jwks.json',
+  },
 });
 
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
@@ -64,12 +86,12 @@ Or you can combine the `authorizer` with your existing logic:
 ```ts
 import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
 
-import { createAuth0Provider } from 'lambda-edge-authorizers';
+import { createOauthProvider } from 'lambda-edge-authorizers';
 
-const authorizer = createAuth0Provider({
-  auth0ClientId: 'your-auth0-client-id',
-  auth0ClientSecret: 'your-auth0-client-secret',
-  auth0Domain: 'your-auth0-tenant.auth0.com',
+const authorizer = createOauthProvider({
+  oauthClientId: 'your-oauth-client-id',
+  oauthClientSecret: 'your-oauth-client-secret',
+  // ...
 });
 
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
@@ -89,6 +111,8 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 ```
 
 ## OAuth Authorizers
+
+Helper functions are provided for popular providers.
 
 ### Auth0
 
