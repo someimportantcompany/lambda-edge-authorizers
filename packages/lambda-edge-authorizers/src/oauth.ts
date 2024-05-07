@@ -15,18 +15,18 @@ export interface OauthAuthorizerOpts {
   oauthClientId: string,
   oauthClientSecret: string,
   oauthAuthorize: {
-    endpoint: string,
+    endpoint: string, // Rework to `url`
     query?: Record<string, string | number | boolean | undefined>,
   },
   oauthTokenExchange: {
-    endpoint: string,
-    userAgent?: string,
+    endpoint: string, // Rework to `url`
+    userAgent?: string, // Rework to headers
   },
   oauthIdToken?: {
-    jwksEndpoint: string,
-    tokenAlgorithms?: Algorithm[],
+    jwksEndpoint: string, // Rework to `jwksUrl`
+    tokenAlgorithms?: Algorithm[], // Rework to `verifyOpts`
     headers?: Record<string, string | number | boolean | undefined>,
-    userAgent?: string,
+    userAgent?: string, // Skip
   } | undefined,
 
   oauthLogoutEndpoint?: {

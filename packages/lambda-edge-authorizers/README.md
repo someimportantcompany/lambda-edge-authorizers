@@ -1,8 +1,14 @@
 # lambda-edge-authorizers
 
-Build Lambda@Edge authorizers for authentication providers.
+A library to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they are not signed-in.
 
-- [Auth0](#auth0)
+- Must be deployed as a Lambda@Edge function, see limitations belows
+- Supports any Oauth2 provider, with optional ID token support for more features
+- Includes helper functions for popular providers.
+
+Provider | Website
+---- | ----
+[Auth0](#auth0) | [auth0.com][auth0-getting-started]
 
 ## Install
 
@@ -82,17 +88,13 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 }
 ```
 
-## Authorizers
+## OAuth Authorizers
 
 ### Auth0
 
-Argument | Description
----- | ----
-`auth0ClientId` | **Required** - Auth0 Client ID
-`auth0ClientSecret` | **Required** - Auth0 Client Secret
-`auth0Domain` | **Required** - Auth0 Tenant Domain
-
 ```ts
+import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
+
 import { createAuth0Provider } from 'lambda-edge-authorizers';
 
 const authorizer = createAuth0Provider({
@@ -100,10 +102,124 @@ const authorizer = createAuth0Provider({
   auth0ClientSecret: 'your-auth0-client-secret',
   auth0Domain: 'your-auth0-tenant.auth0.com',
 });
+
+export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+  const { request } = event.Records[0].cf;
+  const { response } = await authorizer(request);
+  return response ?? request;
+}
 ```
 
-- <https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow>
+Argument | Description
+---- | ----
+`auth0ClientId` | **Required** - Auth0 Client ID.
+`auth0ClientSecret` | **Required** - Auth0 Client Secret.
+`auth0Domain` | **Required** - Auth0 Tenant Domain.
+`oauthAuthorize` | Optional - [Oauth Authorize](#oauthauthorize-properties) properties without `endpoint`.
+`oauthTokenExchange` | Optional - [Oauth Token Exchange](#oauthtokenexchange-properties) properties without `endpoint`.
+`oauthIdToken` | Optional - [Oauth ID Token](#oauthidtoken-properties) properties without `endpoint`.
+`baseUrl` | Optional, defaults to `https://${req.headers.Host}` - manually set Cloudfront's own origin, used in `redirect_uri` field of requests.
+`callbackEndpoint` | Optional, defaults to `/` - the path you'll end up on after authenticating.
+`loginStartEndpoint` | Optional, defaults to `/auth/login` - the path to start the auth login flow.
+`loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - the path to continue the auth login flow.
+`logoutEndpoint` | Optional, defaults to `/auth/logout` - the path to start the auth logout flow.
+`cookie` | Optional, defaults to, omitted - [Cookie properties](#cookie-properties) for storing authentication details.
+
+For more information, see [Auth0's Getting Starter][auth0-getting-started].
+
+### Others
+
+```ts
+import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
+
+import { createOauthProvider } from 'lambda-edge-authorizers';
+
+const authorizer = createOauthProvider({
+  oauthClientId: 'your-oauth-client-id',
+  oauthClientSecret: 'your-oauth-client-secret',
+  oauthAuthorize: {
+    endpoint: 'https://your-oauth-provider.local/authorize',
+    query: {
+      scope: 'openid email',
+    },
+  },
+  oauthTokenExchange: {
+    endpoint: 'https://your-oauth-provider.local/oauth/token',
+  },
+  oauthIdToken: {
+    jwksEndpoint: 'https://your-oauth-provider.local/.well-known/jwks.json',
+  },
+});
+
+export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+  const { request } = event.Records[0].cf;
+  const { response } = await authorizer(request);
+  return response ?? request;
+}
+```
+
+Argument | Description
+---- | ----
+`oauthClientId` | **Required** - Oauth Client ID
+`oauthClientSecret` | **Required** - Oauth Client Secret
+`oauthAuthorize` | **Required** - [Oauth Authorize](#oauthauthorize-properties) properties
+`oauthTokenExchange` | **Required** - [Oauth Token Exchange](#oauthtokenexchange-properties) properties
+`oauthIdToken` | Optional - [Oauth ID Token](#oauthidtoken-properties) properties
+`baseUrl` | Optional, defaults to `https://${req.headers.Host}` - manually set Cloudfront's own origin, used in `redirect_uri` field of requests.
+`callbackEndpoint` | Optional, defaults to `/` - the path you'll end up on after authenticating.
+`loginStartEndpoint` | Optional, defaults to `/auth/login` - the path to start the auth login flow.
+`loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - the path to continue the auth login flow.
+`logoutEndpoint` | Optional, defaults to `/auth/logout` - the path to start the auth logout flow.
+`cookie` | Optional - [Cookie properties](#cookie-properties) for storing authentication details.
+
+#### `oauthAuthorize` Properties
+
+Argument | Description
+---- | ----
+`endpoint` | **Required** - The full URL to redirect visitors.
+`query` | Optional, an object to merge into the redirect query string, to be stringified with [`qs.stringify`][qs-stringify].
+
+#### `oauthTokenExchange` Properties
+
+Argument | Description
+---- | ----
+`endpoint` | **Required** - The full URL to exchange a `code` for tokens.
+`headers` | Optional, an object of request headers to merge into the token exchange request.
+
+#### `oauthIdToken` Properties
+
+Optionally include JWKS details so that `id_token`s can be automatically validated on each request. When enabled & an `id_token` is returned by the Oauth provider, failing to validate an `id_token` will result in a `403 Forbidden` error.
+
+Argument | Description
+---- | ----
+`jwksEndpoint` | **Required** - The full URL to fetch JWKS keys from.
+`tokenAlgorithms` | Optional - a list of valid JWT algorithms (e.g. `["HS256", "RS256"]`) to check the token for.
+`headers` | Optional - an object of request headers to merge into the JWKS request.
+
+#### `cookie` Properties
+
+Optionally modify the cookie attached to visitors when authenticated.
+
+Argument | Description
+---- | ----
+`name` | Optional, defaults to `auth` - The name of the cookie that is set.
+`secret` | Optional - Encrypt the cookie value.
+`domain` | Optional - enforce the cookie sits on a particular domain.
+`path` | Optional, defaults to `/` - enforce the cookie sits on a particular path.
+`httpOnly` | Optional, defaults to `false` - enforce the cookie cannot be read by client-side.
+`sameSite` | Optional - enforce cookie Same Site policy.
+`secure` | Optional - enforce the cookie can only be set on `HTTPS` connections.
+`expires` | Optional - set a default expiry time (e.g. `"10m"`, `"30d"`).
+
+### Future
+
+We're working on bringing more providers for easier setup - [review the upcoming list here](https://github.com/someimportantcompany/lambda-edge-authorizers/issues/1).
 
 ## Recommendations
 
 There are known restrictions on [all edge functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-function-restrictions-all.html) & [Lambda@Edge functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-edge-function-restrictions.html), including (lack of) environment variables. Given this, you should **bundle** your Lambda functions with secrets baked in, and restrict access to those functions where necessary. For an example used in integration tests for this library, see [lambda-example-auth0](https://github.com/someimportantcompany/lambda-edge-authorizers/tree/main/packages/lambda-example-auth0).
+
+
+
+[qs-stringify]: https://www.npmjs.com/package/qs#stringify
+[auth0-getting-started]: https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow
