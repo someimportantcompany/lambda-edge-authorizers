@@ -23,14 +23,14 @@ describe('#createOauthProvider.oauthProvider', () => {
     oauthTokenExchangeEndpoint: '/oauth/token',
   };
 
-  const opts: Required<oauth.OauthAuthorizerOpts> = {
+  const opts: oauth.OauthAuthorizerOpts = {
     oauthClientId: config.oauthClientId,
     oauthClientSecret: config.oauthClientSecret,
     oauthAuthorize: {
-      endpoint: concatUrl([config.oauthProviderUrl, config.oauthAuthorizeEndpoint]),
+      url: concatUrl([config.oauthProviderUrl, config.oauthAuthorizeEndpoint]),
     },
     oauthTokenExchange: {
-      endpoint: concatUrl([config.oauthProviderUrl, config.oauthTokenExchangeEndpoint]),
+      url: concatUrl([config.oauthProviderUrl, config.oauthTokenExchangeEndpoint]),
     },
     oauthIdToken: undefined,
     oauthLogoutEndpoint: undefined,
@@ -60,7 +60,7 @@ describe('#createOauthProvider.oauthProvider', () => {
     const request = createRequest();
     const { response } = await authorizer(request);
 
-    const actualLocation = concatUrl([opts.baseUrl, opts.loginStartEndpoint]);
+    const actualLocation = concatUrl([opts.baseUrl!, opts.loginStartEndpoint!]);
 
     assert.deepStrictEqual(response, {
       status: '302',
@@ -77,14 +77,14 @@ describe('#createOauthProvider.oauthProvider', () => {
 
   test('should redirect to the oauth provider upon request', async () => {
     const request = createRequest({
-      path: opts.loginStartEndpoint,
+      path: opts.loginStartEndpoint!,
     });
     const { response } = await authorizer(request);
 
-    const actualLocation = concatUrl([opts.oauthAuthorize.endpoint], {
+    const actualLocation = concatUrl([opts.oauthAuthorize.url!], {
       client_id: opts.oauthClientId,
       response_type: 'code',
-      redirect_uri: concatUrl([opts.baseUrl, opts.loginCallbackEndpoint]),
+      redirect_uri: concatUrl([opts.baseUrl!, opts.loginCallbackEndpoint!]),
     });
 
     assert.deepStrictEqual(response, {
@@ -116,18 +116,18 @@ describe('#createOauthProvider.oauthProvider', () => {
         client_id: config.oauthClientId,
         client_secret: config.oauthClientSecret,
         code,
-        redirect_uri: concatUrl([opts.baseUrl, opts.loginCallbackEndpoint]),
+        redirect_uri: concatUrl([opts.baseUrl!, opts.loginCallbackEndpoint!]),
       })
       .reply(200, oauthResponse);
 
     const request = createRequest({
-      path: opts.loginCallbackEndpoint,
+      path: opts.loginCallbackEndpoint!,
       query: { code },
     });
     const { response } = await authorizer(request);
 
-    const actualLocation = concatUrl([opts.baseUrl, opts.callbackEndpoint]);
-    const setCookieValue = cookie.serialize(opts.cookie.name!, cookieValue, {
+    const actualLocation = concatUrl([opts.baseUrl!, opts.callbackEndpoint!]);
+    const setCookieValue = cookie.serialize(opts.cookie!.name!, cookieValue, {
       ...opts.cookie,
       expires: new Date(Date.now() + (oauthResponse.expires_in * 1000)),
       maxAge: oauthResponse.expires_in,
@@ -160,7 +160,7 @@ describe('#createOauthProvider.oauthProvider', () => {
         client_id: config.oauthClientId,
         client_secret: config.oauthClientSecret,
         code,
-        redirect_uri: concatUrl([opts.baseUrl, opts.loginCallbackEndpoint]),
+        redirect_uri: concatUrl([opts.baseUrl!, opts.loginCallbackEndpoint!]),
       })
       .reply(400, {
         error: 'invalid_request',
@@ -168,7 +168,7 @@ describe('#createOauthProvider.oauthProvider', () => {
       });
 
     const request = createRequest({
-      path: opts.loginCallbackEndpoint,
+      path: opts.loginCallbackEndpoint!,
       query: { code },
     });
     let { response } = await authorizer(request);
@@ -209,9 +209,9 @@ describe('#createOauthProvider.oauthProvider', () => {
     const cookieValue = Buffer.from(JSON.stringify(oauthResponse), 'utf8').toString('base64');
 
     const request = createRequest({
-      path: opts.callbackEndpoint,
+      path: opts.callbackEndpoint!,
       headers: {
-        'Cookie': `${opts.cookie.name!}=${cookieValue}`,
+        'Cookie': `${opts.cookie!.name!}=${cookieValue}`,
       },
     });
     const { response } = await authorizer(request);
@@ -229,9 +229,9 @@ describe('#createOauthProvider.oauthProvider', () => {
     const cookieValue = Buffer.from(JSON.stringify(oauthResponse), 'utf8').toString('base64');
 
     const request = createRequest({
-      path: opts.logoutEndpoint,
+      path: opts.logoutEndpoint!,
       headers: {
-        'Cookie': `${opts.cookie.name!}=${cookieValue}`,
+        'Cookie': `${opts.cookie!.name!}=${cookieValue}`,
       },
     });
     let { response } = await authorizer(request);

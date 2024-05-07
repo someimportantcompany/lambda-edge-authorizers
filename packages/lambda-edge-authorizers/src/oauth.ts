@@ -15,18 +15,17 @@ export interface OauthAuthorizerOpts {
   oauthClientId: string,
   oauthClientSecret: string,
   oauthAuthorize: {
-    endpoint: string, // Rework to `url`
+    url: string,
     query?: Record<string, string | number | boolean | undefined>,
   },
   oauthTokenExchange: {
-    endpoint: string, // Rework to `url`
-    userAgent?: string, // Rework to headers
+    url: string,
+    headers?: Record<string, string | number | boolean | undefined>,
   },
   oauthIdToken?: {
-    jwksEndpoint: string, // Rework to `jwksUrl`
+    jwksUrl: string,
     tokenAlgorithms?: Algorithm[], // Rework to `verifyOpts`
     headers?: Record<string, string | number | boolean | undefined>,
-    userAgent?: string, // Skip
   } | undefined,
 
   oauthLogoutEndpoint?: {
@@ -91,13 +90,13 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
     throw err;
   });
 
-  const jwksClient = opts.oauthIdToken?.jwksEndpoint
+  const jwksClient = opts.oauthIdToken?.jwksUrl
     ? createJwksClient({
-      jwksUri: opts.oauthIdToken.jwksEndpoint,
+      jwksUri: opts.oauthIdToken.jwksUrl,
       requestHeaders: {
-        'user-agent': opts.oauthIdToken.userAgent
-            ?? process.env.AWS_LAMBDA_FUNCTION_NAME
-            ?? 'lambda-edge-authorizers',
+        ...(process.env.AWS_LAMBDA_FUNCTION_NAME
+          ? { 'user-agent': process.env.AWS_LAMBDA_FUNCTION_NAME }
+          : undefined),
         ...opts.oauthIdToken?.headers,
       },
       timeout: ms('10s'),
@@ -156,35 +155,65 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
     // }));
 
     if (req.uri === config.loginStartEndpoint) {
-      const response = createRedirectResponse(config.oauthAuthorize.endpoint, {
-        query: {
-          client_id: config.oauthClientId,
-          response_type: 'code',
-          redirect_uri: concatUrl(config.baseUrl, config.loginCallbackEndpoint),
-          ...config.oauthAuthorize?.query,
-          // state={state}
-        },
-      });
-      return { response };
+      try {
+        const { url } = config.oauthAuthorize;
+        assert(url, 'Missing url from oauthAuthorize', { code: 'config_error', status: 500 });
+
+        const response = createRedirectResponse(url, {
+          query: {
+            client_id: config.oauthClientId,
+            response_type: 'code',
+            redirect_uri: concatUrl(config.baseUrl, config.loginCallbackEndpoint),
+            ...config.oauthAuthorize?.query,
+            // state={state}
+          },
+        });
+
+        return { response };
+      } catch (err: any) {
+        console.error(jsonStringify({
+          err: formatErr(err as Error),
+        }));
+
+        const response = createResponse({
+          status: '500',
+          headers: {
+            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+          },
+          cookies: {
+            [config.cookie.name!]: {
+              ...config.cookie,
+              value: null,
+            },
+          },
+          body: renderErrorPage({
+            description: err.err_description ?? 'Something went wrong trying to sign-in',
+            code: err.err_code ?? undefined,
+          }),
+        });
+
+        return { response };
+      }
     }
 
     if (req.uri === config.loginCallbackEndpoint) {
       try {
-        const { endpoint } = config.oauthTokenExchange;
-        assert(endpoint, 'Missing endpoint from oauthTokenExchange', { code: 'config_error', status: 500 });
+        const { url } = config.oauthTokenExchange;
+        assert(url, 'Missing url from oauthTokenExchange', { code: 'config_error', status: 500 });
 
         const { code } = qs.parse(req.querystring);
         assert(code, 'Missing code from query', { code: 'req_missing_code', status: 400 });
 
         const newToken = await oauth.request<{}, OauthResponse>({
           method: 'POST',
-          url: endpoint,
+          url: url,
           headers: {
             accept: 'application/json',
             'content-type': 'application/x-www-form-urlencoded',
-            'user-agent': config.oauthTokenExchange?.userAgent
-              ?? process.env.AWS_LAMBDA_FUNCTION_NAME
-              ?? 'lambda-edge-authorizers',
+            ...(process.env.AWS_LAMBDA_FUNCTION_NAME
+              ? { 'user-agent': process.env.AWS_LAMBDA_FUNCTION_NAME }
+              : undefined),
+            ...config.oauthTokenExchange?.headers,
           },
           data: qs.stringify({
             grant_type: 'authorization_code',
@@ -218,11 +247,13 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             },
           },
         });
+
         return { response };
       } catch (err: any) {
         console.error(jsonStringify({
           err: formatErr(err as Error),
         }));
+
         const response = createResponse({
           status: '500',
           headers: {
@@ -239,6 +270,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             code: err.err_code ?? undefined,
           }),
         });
+
         return { response };
       }
     }
@@ -254,6 +286,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           },
           query: config.oauthAuthorize?.query,
         });
+
         return { response };
       } else {
         const response = createResponse({
@@ -269,6 +302,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           },
           body: renderLogoutPage(),
         });
+
         return { response };
       }
     }

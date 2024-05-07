@@ -32,16 +32,16 @@ const authorizer = createOauthProvider({
   oauthClientId: 'your-oauth-client-id',
   oauthClientSecret: 'your-oauth-client-secret',
   oauthAuthorize: {
-    endpoint: 'https://your-oauth-provider.local/authorize',
+    url: 'https://your-oauth-provider.local/authorize',
     query: {
       scope: 'openid email',
     },
   },
   oauthTokenExchange: {
-    endpoint: 'https://your-oauth-provider.local/oauth/token',
+    url: 'https://your-oauth-provider.local/oauth/token',
   },
   oauthIdToken: {
-    jwksEndpoint: 'https://your-oauth-provider.local/.well-known/jwks.json',
+    jwksUrl: 'https://your-oauth-provider.local/.well-known/jwks.json',
   },
 });
 
@@ -61,16 +61,16 @@ const authorizer = createOauthProvider({
   oauthClientId: 'your-oauth-client-id',
   oauthClientSecret: 'your-oauth-client-secret',
   oauthAuthorize: {
-    endpoint: 'https://your-oauth-provider.local/authorize',
+    url: 'https://your-oauth-provider.local/authorize',
     query: {
       scope: 'openid email',
     },
   },
   oauthTokenExchange: {
-    endpoint: 'https://your-oauth-provider.local/oauth/token',
+    url: 'https://your-oauth-provider.local/oauth/token',
   },
   oauthIdToken: {
-    jwksEndpoint: 'https://your-oauth-provider.local/.well-known/jwks.json',
+    jwksUrl: 'https://your-oauth-provider.local/.well-known/jwks.json',
   },
 });
 
@@ -162,16 +162,16 @@ const authorizer = createOauthProvider({
   oauthClientId: 'your-oauth-client-id',
   oauthClientSecret: 'your-oauth-client-secret',
   oauthAuthorize: {
-    endpoint: 'https://your-oauth-provider.local/authorize',
+    url: 'https://your-oauth-provider.local/authorize',
     query: {
       scope: 'openid email',
     },
   },
   oauthTokenExchange: {
-    endpoint: 'https://your-oauth-provider.local/oauth/token',
+    url: 'https://your-oauth-provider.local/oauth/token',
   },
   oauthIdToken: {
-    jwksEndpoint: 'https://your-oauth-provider.local/.well-known/jwks.json',
+    jwksUrl: 'https://your-oauth-provider.local/.well-known/jwks.json',
   },
 });
 
@@ -200,14 +200,14 @@ Argument | Description
 
 Argument | Description
 ---- | ----
-`endpoint` | **Required** - The full URL to redirect visitors.
+`url` | **Required** - The full URL to redirect visitors.
 `query` | Optional, an object to merge into the redirect query string, to be stringified with [`qs.stringify`][qs-stringify].
 
 #### `oauthTokenExchange` Properties
 
 Argument | Description
 ---- | ----
-`endpoint` | **Required** - The full URL to exchange a `code` for tokens.
+`url` | **Required** - The full URL to exchange a `code` for tokens.
 `headers` | Optional, an object of request headers to merge into the token exchange request.
 
 #### `oauthIdToken` Properties
@@ -216,7 +216,7 @@ Optionally include JWKS details so that `id_token`s can be automatically validat
 
 Argument | Description
 ---- | ----
-`jwksEndpoint` | **Required** - The full URL to fetch JWKS keys from.
+`jwksUrl` | **Required** - The full URL to fetch JWKS keys from.
 `tokenAlgorithms` | Optional - a list of valid JWT algorithms (e.g. `["HS256", "RS256"]`) to check the token for.
 `headers` | Optional - an object of request headers to merge into the JWKS request.
 

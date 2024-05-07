@@ -7,8 +7,8 @@ interface RemoveAuthorizerOpts {
   oauthClientSecret: string,
 }
 interface ModifyAuthorizerOpts {
-  oauthAuthorize?: Omit<OauthAuthorizerOpts['oauthAuthorize'], 'endpoint'>,
-  oauthTokenExchange?: Omit<OauthAuthorizerOpts['oauthTokenExchange'], 'endpoint'>,
+  oauthAuthorize?: Omit<OauthAuthorizerOpts['oauthAuthorize'], 'url'>,
+  oauthTokenExchange?: Omit<OauthAuthorizerOpts['oauthTokenExchange'], 'url'>,
 }
 
 interface GenericAuthorizerOpts extends
@@ -33,18 +33,18 @@ export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
 
     oauthAuthorize: {
       ...opts.oauthAuthorize,
-      endpoint: `https://${opts.auth0Domain}/authorize`,
+      url: `https://${opts.auth0Domain}/authorize`,
       query: {
         scope: [ 'openid', 'email' ].concat(opts.auth0Scopes ?? []).join(' '),
         ...opts.oauthAuthorize?.query,
       },
     },
     oauthTokenExchange: {
-      endpoint: `https://${opts.auth0Domain}/oauth/token`,
+      url: `https://${opts.auth0Domain}/oauth/token`,
       ...opts.oauthTokenExchange,
     },
     oauthIdToken: {
-      jwksEndpoint: `https://${opts.auth0Domain}/.well-known/jwks.json`,
+      jwksUrl: `https://${opts.auth0Domain}/.well-known/jwks.json`,
       ...opts.oauthIdToken,
     },
   });
@@ -63,15 +63,15 @@ export function createGoogleProvider(opts: GoogleAuthorizerOpts) {
     ...opts,
 
     oauthAuthorize: {
-      endpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
       ...opts.oauthAuthorize,
     },
     oauthTokenExchange: {
-      endpoint: 'https://oauth2.googleapis.com/token',
+      url: 'https://oauth2.googleapis.com/token',
       ...opts.oauthTokenExchange,
     },
     oauthIdToken: {
-      jwksEndpoint: 'https://www.googleapis.com/oauth2/v3/certs',
+      jwksUrl: 'https://www.googleapis.com/oauth2/v3/certs',
       ...opts.oauthIdToken,
     },
   });
