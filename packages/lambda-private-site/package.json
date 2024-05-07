@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "tsx watch ./server.ts"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/someimportantcompany/lambda-edge-authorizers.git",
+    "directory": "packages/lambda-private-site"
+  },
   "dependencies": {
     "body-parser": "^1.20.2",
     "express": "^4.19.2",

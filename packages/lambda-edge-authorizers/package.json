@@ -10,9 +10,12 @@
     "build:ts": "tsc --declaration --emitDeclarationOnly",
     "test:unit": "jest --coverage '\\.test\\.ts$' --config='../../jest.config.js'"
   },
-  "repository": "https://github.com/someimportantcompany/lambda-edge-authorizers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/someimportantcompany/lambda-edge-authorizers.git",
+    "directory": "packages/lambda-edge-authorizers"
+  },
   "bugs": "https://github.com/someimportantcompany/lambda-edge-authorizers/issues",
-  "homepage": "https://github.com/someimportantcompany/lambda-edge-authorizers#readme",
   "author": "jdrydn <james@jdrydn.com> (https://jdrydn.com)",
   "license": "MIT",
   "files": [
