@@ -1,12 +1,12 @@
 # Lambda@Edge Authorizers
 
-A Lambda@Edge Authorizer library, designed to be dropped into your Lambda@Edge functions.
+A monorepo for [the Lambda@Edge Authorizer library](./packages/lambda-edge-authorizers/), designed to be dropped into your Lambda@Edge functions.
 
-Package | Description
----- | ----
-[`lambda-edge-authorizers`](./packages/lambda-edge-authorizers/) | The core library for this project - to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they are not signed-in.
-[`lambda-example-auth0`](./packages/lambda-example-auth0/) | An example [Auth0](https://auth0.com) project.
-[`lambda-private-site`](./packages/lambda-private-site/) | An example private site that would need to be protected by an authorizer.
+| Package |
+| ---- |
+| [`lambda-edge-authorizers`](./packages/lambda-edge-authorizers/) |
+| [`lambda-example-auth0`](./packages/lambda-example-auth0/) |
+| [`lambda-private-site`](./packages/lambda-private-site/) |
 
 ## Known caveats with Lambda@Edge
 
