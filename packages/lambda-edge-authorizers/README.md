@@ -239,9 +239,10 @@ Argument | Description
 
 We're working on bringing more providers for easier setup - [review the upcoming list here](https://github.com/someimportantcompany/lambda-edge-authorizers/issues/1).
 
-## Recommendations
+## Notes
 
-There are known restrictions on [all edge functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-function-restrictions-all.html) & [Lambda@Edge functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-edge-function-restrictions.html), including (lack of) environment variables. Given this, you should **bundle** your Lambda functions with secrets baked in, and restrict access to those functions where necessary. For an example used in integration tests for this library, see [lambda-example-auth0](https://github.com/someimportantcompany/lambda-edge-authorizers/tree/main/packages/lambda-example-auth0).
+- There are known restrictions on [Lambda@Edge functions](https://github.com/someimportantcompany/lambda-edge-authorizers/#known-caveats-with-lambdaedge) which you should review before deciding if this fits your use-case.
+- Thoughts or questions? Please [open an issue](https://github.com/someimportantcompany/lambda-edge-authorizers/issues)!
 
 
 
