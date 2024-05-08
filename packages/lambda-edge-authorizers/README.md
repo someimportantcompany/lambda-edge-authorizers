@@ -1,5 +1,6 @@
 # lambda-edge-authorizers
 
+[![NPM](https://badge.fury.io/js/lambda-edge-authorizers.svg)](https://npm.im/lambda-edge-authorizers)
 [![Test](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml)
 
 A library to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they are not signed-in.
