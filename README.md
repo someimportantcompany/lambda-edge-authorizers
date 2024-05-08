@@ -1,6 +1,10 @@
 # Lambda@Edge Authorizers
 
+[![Test](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml)
+
 A monorepo for [the Lambda@Edge Authorizer library](./packages/lambda-edge-authorizers/), designed to be dropped into your Lambda@Edge functions.
+
+![Image](./image.png)
 
 | Package |
 | ---- |

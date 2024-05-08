@@ -1,5 +1,7 @@
 # lambda-edge-authorizers
 
+[![Test](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml)
+
 A library to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they are not signed-in.
 
 - Must be deployed as a Lambda@Edge function, see limitations belows
