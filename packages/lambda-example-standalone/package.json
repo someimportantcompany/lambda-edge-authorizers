@@ -9,6 +9,7 @@
     "directory": "packages/lambda-example-standalone"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "lambda-edge-authorizers": "../lambda-edge-authorizers"
   },
   "engines": {
