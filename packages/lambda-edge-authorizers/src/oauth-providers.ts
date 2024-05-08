@@ -44,6 +44,7 @@ export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
       ...opts.oauthTokenExchange,
     },
     oauthIdToken: {
+      required: true,
       jwksUrl: `https://${opts.auth0Domain}/.well-known/jwks.json`,
       ...opts.oauthIdToken,
     },

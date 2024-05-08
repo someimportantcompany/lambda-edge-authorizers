@@ -9,6 +9,7 @@ export function createStack(app: cdk.App, id: string, opts: {
   stackName: string,
   authorizerEntryPath: string,
   authorizerHandlerFn?: string,
+  authorizerIncludeBody?: boolean | undefined,
   envExamplePath?: string | undefined,
 }): void {
   const stack = new cdk.Stack(app, id, {
@@ -42,6 +43,7 @@ export function createStack(app: cdk.App, id: string, opts: {
     lambdaAuthorizer,
     lambdaPrivateSite,
     lambdaPrivateUrl,
+    authorizerIncludeBody: opts.authorizerIncludeBody,
   });
 
   (o => Object.fromEntries(Object.entries(o).map(([ key, value ]) => ([

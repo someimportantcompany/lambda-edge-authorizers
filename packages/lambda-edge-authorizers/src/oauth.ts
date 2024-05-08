@@ -2,14 +2,27 @@ import axios from 'axios';
 import ms from 'ms';
 import qs from 'qs';
 import { assert, tryCatch } from '@someimportantcompany/utils';
-import type { Algorithm } from 'jsonwebtoken';
+import type { JwtPayload, VerifyOptions } from 'jsonwebtoken';
+import type { CloudFrontRequest, CloudFrontResultResponse } from 'aws-lambda';
 
 import { readCookieValue, writeCookieValue } from './lib/cookies';
-import { createJwksClient, verifyTokenWithJwks } from './lib/jwts';
-import { concatUrl, getCookies, createResponse, createRedirectResponse, getSelfBaseUrl } from './lib/req';
+import { createJwksClient, verifyTokenWithJwks, decodeToken } from './lib/jwts';
+import { createResponse } from './cloudfront.helpers';
+import { concatUrl, getCookies, createRedirectResponse, getSelfBaseUrl } from './lib/req';
 import { renderErrorPage, renderLogoutPage } from './lib/template';
 import { jsonStringify, formatErr } from './lib/utils';
-import type { CookieOpts, AuthorizerFn } from './types';
+import type { CookieOpts } from './types';
+
+export interface OauthCookie {
+  token_type: string,
+  access_token: string,
+  id_token?: string,
+  refresh_token?: string,
+  expires_in?: number,
+  scope?: string,
+}
+
+export interface OauthIdTokenPayload extends JwtPayload {}
 
 export interface OauthAuthorizerOpts {
   oauthClientId: string,
@@ -23,9 +36,10 @@ export interface OauthAuthorizerOpts {
     headers?: Record<string, string | number | boolean | undefined>,
   },
   oauthIdToken?: {
+    required?: true,
     jwksUrl: string,
-    tokenAlgorithms?: Algorithm[], // Rework to `verifyOpts`
-    headers?: Record<string, string | number | boolean | undefined>,
+    jwksHeaders?: Record<string, string | number | boolean | undefined>,
+    jwtVerifyOpts?: VerifyOptions,
   } | undefined,
 
   oauthLogoutEndpoint?: {
@@ -41,20 +55,9 @@ export interface OauthAuthorizerOpts {
   cookie?: CookieOpts,
 }
 
-interface OauthResponse {
-  token_type: string,
-  access_token: string,
-  id_token?: string,
-  refresh_token?: string,
-  expires_in?: number,
-  scope?: string,
-}
-interface OauthIdTokenPayload {
-  email: string,
-  [key: string]: string,
-}
-
-export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
+export function createOauthProvider<
+  IdTokenPayload extends OauthIdTokenPayload,
+>(opts: OauthAuthorizerOpts) {
   const oauth = axios.create();
 
   oauth.interceptors.response.use(res => {
@@ -97,13 +100,17 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         ...(process.env.AWS_LAMBDA_FUNCTION_NAME
           ? { 'user-agent': process.env.AWS_LAMBDA_FUNCTION_NAME }
           : undefined),
-        ...opts.oauthIdToken?.headers,
+        ...opts.oauthIdToken?.jwksHeaders,
       },
       timeout: ms('10s'),
     })
     : undefined;
 
-  return async function oauthProvider(req) {
+  return async function oauthProvider(req: CloudFrontRequest): Promise<{
+    response?: CloudFrontResultResponse | undefined,
+    token?: OauthCookie | undefined,
+    idTokenPayload?: IdTokenPayload | undefined,
+  }> {
     const config: Required<OauthAuthorizerOpts> = {
       baseUrl: getSelfBaseUrl(req),
       callbackEndpoint: '/',
@@ -127,25 +134,34 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
 
     const cookies = getCookies(req);
 
-    const token = typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
-      ? tryCatch(() => readCookieValue<OauthResponse>(cookies[config.cookie.name!]!, config.cookie.secret), () => undefined)
+    let token = typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
+      ? tryCatch(() => readCookieValue<OauthCookie>(cookies[config.cookie.name!]!, config.cookie.secret), () => undefined)
       : undefined;
 
     // Validate ID token if present
-    let idTokenPayload: OauthIdTokenPayload | undefined = undefined;
-    if (jwksClient && token?.id_token) {
-      try {
-        idTokenPayload = await verifyTokenWithJwks<OauthIdTokenPayload>(jwksClient, token.id_token, {
-          algorithms: config.oauthIdToken?.tokenAlgorithms,
-        });
-      } catch (err) {
-        console.error(jsonStringify({
-          err: formatErr(err as Error),
-        }));
+    let idTokenPayload: IdTokenPayload | undefined = undefined;
+    if (token?.id_token) {
+      if (jwksClient) {
+        try {
+          idTokenPayload = await verifyTokenWithJwks<IdTokenPayload>(
+            jwksClient, token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+        } catch (err) {
+          console.error(jsonStringify({
+            err: formatErr(err as Error),
+          }));
+        }
+      } else {
+        idTokenPayload = decodeToken<IdTokenPayload>(token.id_token, config.oauthIdToken?.jwtVerifyOpts);
       }
+    } else if (token && config.oauthIdToken?.required === true) {
+      console.warn('WARNING: Missing id_token from cookie, forcing logout');
+      token = undefined;
     }
 
-    const isLoggedIn = jwksClient && token?.id_token ? Boolean(idTokenPayload?.email) : Boolean(token);
+
+    const isLoggedIn = token?.id_token
+      ? Boolean(idTokenPayload !== undefined)
+      : Boolean(token);
 
     // console.log(jsonStringify({
     //   config, req, cookies, isLoggedIn,
@@ -187,7 +203,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             },
           },
           body: renderErrorPage({
-            description: err.err_description ?? 'Something went wrong trying to sign-in',
+            message: err.err_description ?? 'Something went wrong trying to sign-in',
             code: err.err_code ?? undefined,
           }),
         });
@@ -204,7 +220,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
         const { code } = qs.parse(req.querystring);
         assert(code, 'Missing code from query', { code: 'req_missing_code', status: 400 });
 
-        const newToken = await oauth.request<{}, OauthResponse>({
+        token = await oauth.request<{}, OauthCookie>({
           method: 'POST',
           url: url,
           headers: {
@@ -226,10 +242,23 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           validateStatus: status => status === 200,
         });
 
-        if (jwksClient && newToken?.id_token) {
-          idTokenPayload = await verifyTokenWithJwks<OauthIdTokenPayload>(jwksClient, newToken.id_token, {
-            algorithms: config.oauthIdToken?.tokenAlgorithms,
-          });
+        assert(typeof token?.id_token === 'string' || config.oauthIdToken?.required !== true,
+          'Missing id_token from token response');
+
+        if (token?.id_token) {
+          if (jwksClient) {
+            try {
+              idTokenPayload = await verifyTokenWithJwks<IdTokenPayload>(
+                jwksClient, token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+            } catch (err) {
+              console.error(jsonStringify({
+                err: formatErr(err as Error),
+              }));
+            }
+          } else {
+            idTokenPayload = decodeToken<IdTokenPayload>(token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+          }
+
           console.debug(jsonStringify({
             token, idTokenPayload,
           }));
@@ -239,16 +268,16 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
           cookies: {
             [config.cookie.name!]: {
               // By default, set the cookie to expire when this access token should
-              ...(typeof newToken.expires_in === 'number' ? { expires: `${newToken.expires_in}s` } : undefined),
+              ...(typeof token.expires_in === 'number' ? { expires: `${token.expires_in}s` } : undefined),
               // But this could be overwritten by the developer
               ...config.cookie,
-              // And embed the OauthResponse into the cookie
-              value: writeCookieValue(newToken, config.cookie.secret),
+              // And embed the OauthCookie into the cookie
+              value: writeCookieValue(token, config.cookie.secret),
             },
           },
         });
 
-        return { response };
+        return { response, token, idTokenPayload };
       } catch (err: any) {
         console.error(jsonStringify({
           err: formatErr(err as Error),
@@ -266,7 +295,7 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
             },
           },
           body: renderErrorPage({
-            description: err.err_description ?? 'Something went wrong trying to sign-in',
+            message: err.err_description ?? 'Something went wrong trying to sign-in',
             code: err.err_code ?? undefined,
           }),
         });
@@ -312,6 +341,6 @@ export function createOauthProvider(opts: OauthAuthorizerOpts): AuthorizerFn {
       return { response };
     }
 
-    return { response: undefined };
+    return { response: undefined, token, idTokenPayload };
   };
 }

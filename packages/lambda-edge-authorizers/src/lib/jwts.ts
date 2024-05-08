@@ -30,3 +30,9 @@ export function verifyTokenWithJwks<T extends Record<string, any>>(
     });
   });
 }
+
+export function decodeToken<T extends Record<string, any>>(token: string, options: VerifyOptions = {}):
+T | undefined {
+  const payload: T | undefined = (jwt.decode(token, options) ?? undefined) as unknown as (T | undefined);
+  return payload;
+}

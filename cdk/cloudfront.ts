@@ -5,6 +5,7 @@ export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
   lambdaAuthorizer: cdk.aws_lambda.Function,
   lambdaPrivateSite: cdk.aws_lambda.Function,
   lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl,
+  authorizerIncludeBody?: boolean | undefined,
 }) {
   const origin = new cdk.aws_cloudfront_origins.FunctionUrlOrigin(opts.lambdaPrivateUrl, {
     originId: 'lambda-private-site',
@@ -22,6 +23,7 @@ export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
         {
           functionVersion: opts.lambdaAuthorizer.currentVersion as any,
           eventType: cdk.aws_cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+          includeBody: opts.authorizerIncludeBody ?? false,
         },
       ],
     },

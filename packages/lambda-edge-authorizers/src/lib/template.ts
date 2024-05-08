@@ -33,12 +33,12 @@ export function renderLogoutPage() {
 }
 
 export function renderErrorPage(err: {
-  description: string,
+  message: string,
   code?: string | undefined,
 }) {
   return renderPage({
     title: 'An error occurred',
-    description: err.description,
+    description: err.message,
     subtext: err.code ? `(Error: ${err.code})` : undefined,
   })
 }
