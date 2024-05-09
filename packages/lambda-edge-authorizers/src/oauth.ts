@@ -6,7 +6,7 @@ import type { JwtPayload, VerifyOptions } from 'jsonwebtoken';
 import type { CloudFrontRequest, CloudFrontResultResponse } from 'aws-lambda';
 
 import { readCookieValue, writeCookieValue } from './lib/cookies';
-import { createJwksClient, verifyTokenWithJwks, decodeToken } from './lib/jwts';
+import { createJwksClient, verifyTokenWithJwks, decodeToken, verifyTokenWithSecret } from './lib/jwts';
 import { createResponse } from './cloudfront.helpers';
 import { concatUrl, getCookies, createRedirectResponse, getSelfBaseUrl } from './lib/req';
 import { renderErrorPage, renderLogoutPage } from './lib/template';
@@ -29,22 +29,23 @@ export interface OauthAuthorizerOpts {
   oauthClientSecret: string,
   oauthAuthorize: {
     url: string,
-    query?: Record<string, string | number | boolean | undefined>,
+    query?: Record<string, string | number | boolean | undefined> | undefined,
   },
   oauthTokenExchange: {
     url: string,
-    headers?: Record<string, string | number | boolean | undefined>,
+    headers?: Record<string, string | number | boolean | undefined> | undefined,
   },
   oauthIdToken?: {
     required?: true,
-    jwksUrl: string,
-    jwksHeaders?: Record<string, string | number | boolean | undefined>,
-    jwtVerifyOpts?: VerifyOptions,
+    jwksUrl?: string | undefined,
+    jwksHeaders?: Record<string, string | number | boolean | undefined> | undefined,
+    jwtSecret?: string | undefined,
+    jwtVerifyOpts?: VerifyOptions | undefined,
   } | undefined,
 
   oauthLogoutEndpoint?: {
     endpoint: string,
-    query?: Record<string, string | number | boolean | undefined>,
+    query?: Record<string, string | number | boolean | undefined> | undefined,
   } | undefined,
 
   baseUrl?: string,
@@ -144,20 +145,28 @@ export function createOauthProvider<
       if (jwksClient) {
         try {
           idTokenPayload = await verifyTokenWithJwks<IdTokenPayload>(
-            jwksClient, token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+            jwksClient,
+            token.id_token,
+            config.oauthIdToken?.jwtVerifyOpts,
+          );
         } catch (err) {
           console.error(jsonStringify({
             err: formatErr(err as Error),
           }));
         }
+      } else if (config.oauthIdToken?.jwtSecret) {
+        idTokenPayload = verifyTokenWithSecret<IdTokenPayload>(
+          config.oauthIdToken.jwtSecret,
+          token.id_token,
+          config.oauthIdToken?.jwtVerifyOpts,
+        );
       } else {
-        idTokenPayload = decodeToken<IdTokenPayload>(token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+        idTokenPayload = decodeToken<IdTokenPayload>(
+          token.id_token,
+          config.oauthIdToken?.jwtVerifyOpts,
+        );
       }
-    } else if (token && config.oauthIdToken?.required === true) {
-      console.warn('WARNING: Missing id_token from cookie, forcing logout');
-      token = undefined;
     }
-
 
     const isLoggedIn = token?.id_token
       ? Boolean(idTokenPayload !== undefined)
@@ -166,6 +175,7 @@ export function createOauthProvider<
     // console.log(jsonStringify({
     //   config, req, cookies, isLoggedIn,
     // }));
+
     // console.debug(jsonStringify({
     //   token, idTokenPayload,
     // }));
@@ -249,14 +259,26 @@ export function createOauthProvider<
           if (jwksClient) {
             try {
               idTokenPayload = await verifyTokenWithJwks<IdTokenPayload>(
-                jwksClient, token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+                jwksClient,
+                token.id_token,
+                config.oauthIdToken?.jwtVerifyOpts,
+              );
             } catch (err) {
               console.error(jsonStringify({
                 err: formatErr(err as Error),
               }));
             }
+          } else if (config.oauthIdToken?.jwtSecret) {
+            idTokenPayload = verifyTokenWithSecret<IdTokenPayload>(
+              config.oauthIdToken.jwtSecret,
+              token.id_token,
+              config.oauthIdToken?.jwtVerifyOpts,
+            );
           } else {
-            idTokenPayload = decodeToken<IdTokenPayload>(token.id_token, config.oauthIdToken?.jwtVerifyOpts);
+            idTokenPayload = decodeToken<IdTokenPayload>(
+              token.id_token,
+              config.oauthIdToken?.jwtVerifyOpts,
+            );
           }
 
           console.debug(jsonStringify({

@@ -19,13 +19,13 @@ export interface StandaloneAuthorizerOpts<
   Profile extends StandaloneProfile,
 > {
   logins: Record<string, { profile?: Profile, password: string }>,
+
   customise?: {
     title?: string,
     logoUrl?: string,
   },
-  passwords?: {
-    compare?: (input: string, password: string) => boolean,
-  },
+
+  comparePassword?: (input: string, password: string) => boolean,
 
   baseUrl?: string,
   callbackEndpoint?: string,
@@ -48,15 +48,12 @@ export function creatStandaloneProvider<
       loginEndpoint: '/auth/login',
       logoutEndpoint: '/auth/logout',
 
+      comparePassword: (a, b) => a === b,
+
       ...opts,
 
       customise: {
         ...opts.customise,
-      },
-
-      passwords: {
-        compare: (a, b) => a === b,
-        ...opts.passwords,
       },
 
       cookie: {

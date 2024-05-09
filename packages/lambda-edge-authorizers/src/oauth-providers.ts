@@ -9,6 +9,7 @@ interface RemoveAuthorizerOpts {
 interface ModifyAuthorizerOpts {
   oauthAuthorize?: Omit<OauthAuthorizerOpts['oauthAuthorize'], 'url'>,
   oauthTokenExchange?: Omit<OauthAuthorizerOpts['oauthTokenExchange'], 'url'>,
+  oauthIdToken?: Omit<OauthAuthorizerOpts['oauthIdToken'], 'jwksUrl' | 'jwtSecret'>,
 }
 
 interface GenericAuthorizerOpts extends
@@ -47,6 +48,7 @@ export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
       required: true,
       jwksUrl: `https://${opts.auth0Domain}/.well-known/jwks.json`,
       ...opts.oauthIdToken,
+      jwtSecret: undefined,
     },
   });
 }
@@ -72,8 +74,10 @@ export function createGoogleProvider(opts: GoogleAuthorizerOpts) {
       ...opts.oauthTokenExchange,
     },
     oauthIdToken: {
+      required: true,
       jwksUrl: 'https://www.googleapis.com/oauth2/v3/certs',
       ...opts.oauthIdToken,
+      jwtSecret: undefined,
     },
   });
 }

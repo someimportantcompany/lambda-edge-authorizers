@@ -3,6 +3,20 @@ import createJwksClient, { JwksClient } from 'jwks-rsa';
 
 export { createJwksClient };
 
+export function decodeToken<T extends Record<string, any>>(token: string, options: VerifyOptions = {}):
+T | undefined {
+  const payload: T | undefined = (jwt.decode(token, options) ?? undefined) as unknown as (T | undefined);
+  return payload;
+}
+
+export function verifyTokenWithSecret<T extends Record<string, any>>(
+  secret: string,
+  token: string,
+  options: VerifyOptions = {},
+): T {
+  return jwt.verify(token, secret, options) as T;
+}
+
 export function verifyTokenWithJwks<T extends Record<string, any>>(
   client: JwksClient,
   token: string,
@@ -29,10 +43,4 @@ export function verifyTokenWithJwks<T extends Record<string, any>>(
       }
     });
   });
-}
-
-export function decodeToken<T extends Record<string, any>>(token: string, options: VerifyOptions = {}):
-T | undefined {
-  const payload: T | undefined = (jwt.decode(token, options) ?? undefined) as unknown as (T | undefined);
-  return payload;
 }
