@@ -9,12 +9,12 @@ const app = new cdk.App();
 
 createStack(app, 'Auth0', {
   stackName: `${CDK_STACK_PREFIX}-auth0`,
-  authorizerEntryPath: path.resolve(__dirname, './packages/lambda-example-auth0/simple.ts'),
+  authorizerEntryPath: path.resolve(__dirname, './packages/lambda-example-auth0/1-out-of-the-box.ts'),
   envExamplePath: path.resolve(__dirname, './packages/lambda-example-auth0/.env.example'),
 });
 
 createStack(app, 'Standalone', {
   stackName: `${CDK_STACK_PREFIX}-standalone`,
-  authorizerEntryPath: path.resolve(__dirname, './packages/lambda-example-standalone/simple.ts'),
+  authorizerEntryPath: path.resolve(__dirname, './packages/lambda-example-standalone/1-out-of-the-box.ts'),
   authorizerIncludeBody: true,
 });

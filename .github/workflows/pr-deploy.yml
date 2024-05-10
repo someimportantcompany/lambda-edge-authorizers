@@ -1,0 +1,53 @@
+name: PR Deploy
+
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: |
+      false
+      || contains(github.event.pull_request.labels.*.name, 'deploy-dev1')
+      || contains(github.event.pull_request.labels.*.name, 'deploy-dev2')
+      || contains(github.event.pull_request.labels.*.name, 'deploy-dev3')
+    env:
+      NODE_ENV: production
+    steps:
+      - uses: actions/github-scripts@v7
+        id: label
+        with:
+          result-encoding: string
+          script: |
+            console.log(context)
+            console.log(context.payload.pull_request)
+
+            const labels = Array.isArray(context.payload.pull_request?.labels)
+              ? context.payload.pull_request.labels.filter(l => `${l?.name}`.startsWith('deploy-'))
+              : [];
+            console.log(labels)
+            return "deploy-dev1"
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-lambda-edge-authorizer
+          role-session-name: lambda-edge-authorizer-${{github.event.pull_request.number}}
+          aws-region: us-east-1
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run build
+
+      - run: npm run deploy
+        env:
+          CDK_STACK_PREFIX: lambda-edge-authorizer-${{steps.label.outputs.result}}
+
+      #- run: npm run test:e2e
