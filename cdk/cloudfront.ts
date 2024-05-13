@@ -1,5 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 
+/**
+ * @link https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html
+ */
 export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
   resourceName: string,
   lambdaAuthorizer: cdk.aws_lambda.Function,
@@ -13,6 +16,14 @@ export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
 
   const cloudfront = new cdk.aws_cloudfront.Distribution(stack, 'Distribution', {
     comment: opts.resourceName,
+    // ...(opts.cloudfrontCustomDomain && {
+    //   domainNames: [ opts.cloudfrontCustomDomain ],
+    // }),
+    // ...(opts.cloudfrontCertificateId && {
+    //   certificate: cdk.aws_certificatemanager.Certificate.fromCertificateArn(stack, 'Certificate', cdk.Fn.join('', [
+    //     'arn:aws:acm:us-east-1:', cdk.Fn.ref('AWS::AccountId'), ':certificate/', opts.cloudfrontCertificateId,
+    //   ])),
+    // }),
     defaultBehavior: {
       origin,
       allowedMethods: cdk.aws_cloudfront.AllowedMethods.ALLOW_ALL,

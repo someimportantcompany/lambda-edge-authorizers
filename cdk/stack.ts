@@ -11,22 +11,24 @@ export function createStack(app: cdk.App, id: string, opts: {
   authorizerHandlerFn?: string,
   authorizerIncludeBody?: boolean | undefined,
   envExamplePath?: string | undefined,
+  // cloudfrontCustomDomain?: string | undefined,
+  // cloudfrontCertificateId?: string | undefined,
 }): void {
   const stack = new cdk.Stack(app, id, {
     stackName: opts.stackName,
   });
 
-  const resourceName = cdk.Fn.join('-', [
-    cdk.Fn.ref('AWS::StackName'),
-    cdk.Fn.select(0, cdk.Fn.split('-', cdk.Fn.select(1, cdk.Fn.split('/', cdk.Fn.select(1, cdk.Fn.split('stack/', cdk.Fn.ref('AWS::StackId'))))))),
-  ]);
+  // const resourceName = cdk.Fn.join('-', [
+  //   cdk.Fn.ref('AWS::StackName'),
+  //   cdk.Fn.select(0, cdk.Fn.split('-', cdk.Fn.select(1, cdk.Fn.split('/', cdk.Fn.select(1, cdk.Fn.split('stack/', cdk.Fn.ref('AWS::StackId'))))))),
+  // ]);
 
   const lambdaRole = createLambdaRole(stack, {
-    resourceName,
+    resourceName: opts.stackName,
   });
 
   const { lambdaAuthorizer } = createLambdaAuthorizer(stack, {
-    resourceName,
+    resourceName: opts.stackName,
     role: lambdaRole,
     entry: opts.authorizerEntryPath,
     handler: opts.authorizerHandlerFn,
@@ -34,16 +36,18 @@ export function createStack(app: cdk.App, id: string, opts: {
   });
 
   const { lambdaPrivateSite, lambdaPrivateUrl } = createLambdaPrivateSite(stack, {
-    resourceName,
+    resourceName: opts.stackName,
     role: lambdaRole,
   });
 
   const { cloudfront } = createCloudfrontDistribution(stack, {
-    resourceName,
+    resourceName: opts.stackName,
     lambdaAuthorizer,
     lambdaPrivateSite,
     lambdaPrivateUrl,
     authorizerIncludeBody: opts.authorizerIncludeBody,
+    // cloudfrontCustomDomain: opts.cloudfrontCustomDomain,
+    // cloudfrontCertificateId: opts.cloudfrontCertificateId,
   });
 
   (o => Object.fromEntries(Object.entries(o).map(([ key, value ]) => ([

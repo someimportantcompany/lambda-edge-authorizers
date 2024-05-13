@@ -1,18 +1,13 @@
-name: PR Deploy
+name: PR Teardown
 
 on:
   pull_request:
     types:
-      - labeled
+      - closed
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: |
-      false
-      || contains(github.event.pull_request.labels.*.name, 'deploy-dev1')
-      || contains(github.event.pull_request.labels.*.name, 'deploy-dev2')
-      || contains(github.event.pull_request.labels.*.name, 'deploy-dev3')
     steps:
       - uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -31,12 +26,9 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run test:unit
-      - run: npm run build
 
-      - run: npm run deploy
+      - run: npm run deploy:teardown
         env:
-          CDK_STACK_PREFIX: lambda-edge-authorizer-${{steps.label.outputs.result}}
-          SUBDOMAIN_PREFIX: ${{steps.label.outputs.value}}
+          CDK_STACK_PREFIX: lambda-edge-authorizer-${{steps.label.outputs.value}}
 
       #- run: npm run test:e2e
