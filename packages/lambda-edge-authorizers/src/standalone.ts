@@ -4,7 +4,7 @@ import type { CloudFrontRequest, CloudFrontResultResponse } from 'aws-lambda';
 import { readCookieValue, writeCookieValue } from './lib/cookies';
 import { createResponse } from './cloudfront.helpers';
 import { concatUrl, getCookies, createRedirectResponse, getSelfBaseUrl } from './lib/req';
-import { renderErrorPage, renderLogoutPage } from './lib/template';
+import { renderErrorPage, renderLoginPage, renderLogoutPage } from './lib/template';
 import { jsonStringify, formatErr } from './lib/utils';
 import type { CookieOpts } from './types';
 
@@ -18,7 +18,7 @@ export interface StandaloneProfile extends Record<string, unknown> {}
 export interface StandaloneAuthorizerOpts<
   Profile extends StandaloneProfile,
 > {
-  logins: Record<string, { profile?: Profile, password: string }>,
+  logins: Record<string, Profile & { password: string }>,
 
   customise?: {
     title?: string,
@@ -40,7 +40,7 @@ export function creatStandaloneProvider<
   return async function standaloneProvider(req: CloudFrontRequest): Promise<{
     response?: CloudFrontResultResponse | undefined,
     username?: string | undefined,
-    profile?: Profile | undefined,
+    profile?: Omit<Profile, 'password'> | undefined,
   }> {
     const config: Required<StandaloneAuthorizerOpts<Profile>> = {
       baseUrl: getSelfBaseUrl(req),
@@ -74,7 +74,7 @@ export function creatStandaloneProvider<
       )
       : undefined;
 
-    let { profile } = ((auth?.username && opts.logins[auth.username]) ? opts.logins[auth.username] : undefined) ?? {};
+    let profile = ((auth?.username && opts.logins[auth.username]) ? opts.logins[auth.username] : undefined) ?? undefined;
 
     const isLoggedIn = Boolean(auth?.username && opts.logins[auth.username]);
 
@@ -86,7 +86,23 @@ export function creatStandaloneProvider<
     // }));
 
     if (req.method === 'GET' && req.uri === config.loginEndpoint) {
-      // Render the login page
+      const response = createResponse({
+        status: '200',
+        headers: {
+          'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+        },
+        cookies: {
+          [config.cookie.name!]: {
+            ...config.cookie,
+            value: null,
+          },
+        },
+        body: renderLoginPage({
+          title: opts.customise?.title ? `Login - ${opts.customise.title}` : 'Login',
+        }),
+      });
+
+      return { response };
     } else if (req.method === 'POST' && req.uri === config.loginEndpoint) {
       // Process the login request
       try {
@@ -105,7 +121,11 @@ export function creatStandaloneProvider<
           },
         });
 
-        return { response, username: auth?.username, profile };
+        return {
+          response,
+          username: auth?.username,
+          profile: profile ? cleanProfile<Profile>(profile) : undefined,
+        };
       } catch (err: any) {
         console.error(jsonStringify({
           err: formatErr(err as Error),
@@ -153,6 +173,14 @@ export function creatStandaloneProvider<
       return { response };
     }
 
-    return { response: undefined, username: auth?.username, profile };
+    return {
+      response: undefined,
+      username: auth?.username,
+      profile: profile ? cleanProfile<Profile>(profile) : undefined,
+    };
   };
+}
+
+function cleanProfile<T>({ password, ...profile }: T & { password: string }): Omit<T, 'password'> {
+  return profile;
 }

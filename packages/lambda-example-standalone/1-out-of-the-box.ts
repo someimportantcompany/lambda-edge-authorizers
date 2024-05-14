@@ -1,12 +1,11 @@
-import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
-
 import { creatStandaloneProvider } from 'lambda-edge-authorizers';
+import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
 
 const authorizer = creatStandaloneProvider({
   logins: {
     root: {
+      displayName: 'ROOT',
       password: 'correct-horse-battery-staple',
-      profile: { displayName: 'ROOT' },
     },
   },
   cookie: {
