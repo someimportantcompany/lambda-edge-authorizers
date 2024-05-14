@@ -5,9 +5,13 @@
 
 A library to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they are not signed-in.
 
-- Must be deployed as a Lambda@Edge function, see limitations belows
-- Supports any Oauth2 provider, with optional ID token support for more features
-- Includes helper functions for popular providers:
+![Image](https://cdn.jsdelivr.net/gh/someimportantcompany/lambda-edge-authorizers@37739b895d43fcef4d53c760a7ab5aef3746b4f8/image.png)
+
+- Must be deployed as a Lambda@Edge function.
+- Supports:
+  - Any Oauth2 provider, with optional ID token support where needed.
+  - Standalone username/password logins, with hardcoded credentials.
+- Includes helper functions for popular Oauth2 providers:
 
 Provider | Documentation
 ---- | ----
@@ -76,6 +80,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
   const { request } = event.Records[0].cf;
 
   // Return early if pre-condition logic is met (e.g. public-facing route)
+  // You could also customise a Cloudfront behaviour to avoid the Lambda@Edge function
 
   const { response } = await authorizer(request);
   if (response) {
@@ -88,11 +93,9 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 }
 ```
 
-## OAuth Authorizers
+## Authorizers
 
-Helper functions are provided for popular providers.
-
-### Auth0
+### Auth0 Provider
 
 ```ts
 import { createAuth0Provider } from 'lambda-edge-authorizers';
@@ -128,7 +131,7 @@ Argument | Description
 
 For more information, see [Auth0's Getting Starter][auth0-getting-started].
 
-### Custom Provider
+### Custom Oauth2 Provider
 
 If you know the relevant details, you can configure any Oauth-compliant provider.
 
@@ -201,7 +204,97 @@ When `jwksUrl` or `jwtSecret` is set & an `id_token` is returned by the Oauth pr
 
 Omitting `jwksUrl` will disable ID token verification. If you omit `jwksUrl`, omit `jwtSecret` & set `required: true` then this library will **decode** `id_token` instead of ignoring it, without verification.
 
-### Options
+### Standalone Provider
+
+If you don't want to use a 3rd-party provider, you can configure authentication using a static list of credentials.
+
+```ts
+import { creatStandaloneProvider } from 'lambda-edge-authorizers';
+import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
+
+const authorizer = creatStandaloneProvider({
+  logins: {
+    root: {
+      password: 'correct-horse-battery-staple',
+    },
+  },
+  cookie: {
+    secret: 'be9a8bfe32efbe608564adccf62fc2b5',
+  },
+});
+
+export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+  const { request } = event.Records[0].cf;
+  const { response } = await authorizer(request);
+  return response ?? request;
+}
+```
+
+Argument | Description
+---- | ----
+`logins` | **Required** - a collection of valid logins & optional profile data, see below.
+`customise.title` | Optional - used at the title of the Login page/form.
+`customise.logoUrl` | Optional - display a logo above the Login form.
+`comparePassword` | Optional - a function to compare passwords, see below.
+`baseUrl` | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more.
+`callbackEndpoint` | Optional, defaults to `/` - see [Options](#options) for more.
+`loginStartEndpoint` | Optional, defaults to `/auth/login` - see [Options](#options) for more.
+`loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.
+`logoutEndpoint` | Optional, defaults to `/auth/logout` - see [Options](#options) for more.
+`cookie` | Optional - see [Cookie properties](#cookie-properties) for more.
+
+**`logins`**
+
+Logins are a map of usernames → passwords, with optional profile data that can be passed along to your `viewer-request` function on successful login.
+
+```ts
+interface Profile {
+  [key: string]: unknown,
+}
+
+interface LoginProfiles {
+  [username: string]: Profile & { password: string },
+}
+```
+
+Once authenticated, the `profile` of the current user is returned from the `authorizer` if desired:
+
+```ts
+import { creatStandaloneProvider } from 'lambda-edge-authorizers';
+import type { CloudFrontRequestEvent, CloudFrontRequestResult } from 'aws-lambda';
+
+const authorizer = creatStandaloneProvider({
+  logins: {
+    root: {
+      displayName: 'ROOT',
+      password: 'correct-horse-battery-staple',
+    },
+  },
+  cookie: {
+    secret: 'be9a8bfe32efbe608564adccf62fc2b5',
+  },
+});
+
+export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+  const { request } = event.Records[0].cf;
+  const { response, profile } = await authorizer(request);
+
+  if (response) {
+    return response;
+  }
+
+  if (profile) {
+    request.headers['x-authed-displayname'] = [{
+      key: 'X-Authed-DisplayName',
+      value: profile.displayName,
+    }];
+  }
+
+  return request;
+}
+```
+
+## Options
 
 Argument | Description
 ---- | ----
@@ -212,7 +305,7 @@ Argument | Description
 `logoutEndpoint` | Optional, defaults to `/auth/logout` - see [Options](#options) for more.
 `cookie` | Optional - see [Cookie properties](#cookie-properties) for more.
 
-#### `cookie` Properties
+### `cookie` Properties
 
 Optionally modify the cookie attached to visitors when authenticated.
 
@@ -235,8 +328,6 @@ We're working on bringing more providers for easier setup - [review the upcoming
 
 - There are known restrictions on [Lambda@Edge functions](https://github.com/someimportantcompany/lambda-edge-authorizers/#known-caveats-with-lambdaedge) which you should review before deciding if this fits your use-case.
 - Thoughts or questions? Please [open an issue](https://github.com/someimportantcompany/lambda-edge-authorizers/issues)!
-
-
 
 [qs-stringify]: https://www.npmjs.com/package/qs#stringify
 [auth0-getting-started]: https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow
