@@ -4,7 +4,7 @@
     "target": "ES2015",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
-    "rootDir": "./packages",
+    "rootDir": "./",
     "removeComments": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -21,7 +21,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
   "exclude": [ "node_modules" ]
 }

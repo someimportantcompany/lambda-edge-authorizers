@@ -1,43 +1,25 @@
 import { createHash } from "crypto";
 
-interface LogMessage {
-  event?: string,
-  userId?: string,
-  err?: Error | unknown | string,
-  [key: string]: string | number | boolean | Date | any[] | Record<string, any> | unknown,
-  correlationId?: never,
-  level?: never,
-}
-
-const showDebug = process.env.LOG_DEBUG === 'true';
-
-function getCorrelationId() {
+export function getCorrelationId() {
   return process.env._X_AMZN_TRACE_ID
     ? createHash('md5').update(process.env._X_AMZN_TRACE_ID).digest('hex')
     : undefined;
 }
 
-function formatLog(level: string, log: LogMessage): string {
-  const correlationId = getCorrelationId();
-  const formatted: Record<string, any> = {};
-
-  if (log.err instanceof Error) {
-    formatted.err = {
-      message: typeof log.err.message === 'string' ? log.err.message : `${log.err}`,
-      stack: log.err.stack?.split('\n').map(s => s.trim()),
-      ...Object.fromEntries(Object.entries(log.err).filter(([key]) => key !== 'message' && key !== 'stack')),
-    };
-  }
-
-  return JSON.stringify({ level, correlationId, ...log, ...formatted }, safeCyclesSet());
+export function formatErr(err: Error | Record<string, unknown>): Record<string, unknown> {
+  return {
+    message: typeof err.message === 'string' ? err.message : `${err}`,
+    stack: typeof err.stack === 'string' ? err.stack.split('\n').map(s => s.trim()) : undefined,
+    ...Object.fromEntries(Object.entries(err).filter(([key]) => key !== 'message' && key !== 'stack')),
+  };
 }
 
-/**
- * @link https://github.com/trentm/node-bunyan/blob/5c2258ecb1d33ba34bd7fbd6167e33023dc06e40/lib/bunyan.js#L1156
- */
-function safeCyclesSet() {
-  var seen = new Set();
-  return function (_key: string, val: unknown) {
+export function jsonStringify(value: unknown): string {
+  /**
+   * @link https://github.com/trentm/node-bunyan/blob/5c2258ecb1d33ba34bd7fbd6167e33023dc06e40/lib/bunyan.js#L1156
+   */
+  const seen = new Set();
+  const safeCyclesSet = function (_key: string, val: unknown) {
     if (!val || typeof (val) !== 'object') {
       return val;
     } else if (seen.has(val)) {
@@ -47,22 +29,6 @@ function safeCyclesSet() {
       return val;
     }
   };
-}
 
-export function debugLog(log: LogMessage): void {
-  if (showDebug) {
-    console.log(formatLog('debug', log));
-  }
-}
-
-export function infoLog(log: LogMessage): void {
-  console.log(formatLog('info', log));
-}
-
-export function warnLog(log: LogMessage): void {
-  console.log(formatLog('warn', log));
-}
-
-export function errorLog(log: LogMessage): void {
-  console.log(formatLog('error', log));
+  return JSON.stringify(value, safeCyclesSet);
 }

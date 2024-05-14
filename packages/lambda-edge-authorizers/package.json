@@ -7,11 +7,15 @@
     "build": "run-s build:*",
     "build:clean": "rimraf ./dist",
     "build:lib": "tsc",
-    "build:ts": "tsc --declaration --emitDeclarationOnly"
+    "build:ts": "tsc --declaration --emitDeclarationOnly",
+    "test:unit": "jest --coverage '\\.test\\.ts$' --config='../../jest.config.js'"
   },
-  "repository": "https://github.com/someimportantcompany/lambda-edge-authorizers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/someimportantcompany/lambda-edge-authorizers.git",
+    "directory": "packages/lambda-edge-authorizers"
+  },
   "bugs": "https://github.com/someimportantcompany/lambda-edge-authorizers/issues",
-  "homepage": "https://github.com/someimportantcompany/lambda-edge-authorizers#readme",
   "author": "jdrydn <james@jdrydn.com> (https://jdrydn.com)",
   "license": "MIT",
   "files": [
@@ -28,6 +32,7 @@
     "statuses": "^2.0.1"
   },
   "devDependencies": {
+    "@lambda-edge-authorizers/test": "../../test",
     "@types/cookie": "^0.6.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/ms": "^0.7.34",
