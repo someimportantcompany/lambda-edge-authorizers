@@ -5,15 +5,19 @@ import { createLambdaAuthorizer } from './lambda-authorizer';
 import { createLambdaPrivateSite } from './lambda-private-site';
 import { createLambdaRole } from './lambda-role';
 
-export function createStack(app: cdk.App, id: string, opts: {
-  stackName: string,
-  authorizerEntryPath: string,
-  authorizerHandlerFn?: string,
-  authorizerIncludeBody?: boolean | undefined,
-  envExamplePath?: string | undefined,
-  // cloudfrontCustomDomain?: string | undefined,
-  // cloudfrontCertificateId?: string | undefined,
-}): void {
+export function createStack(
+  app: cdk.App,
+  id: string,
+  opts: {
+    stackName: string;
+    authorizerEntryPath: string;
+    authorizerHandlerFn?: string;
+    authorizerIncludeBody?: boolean | undefined;
+    envExamplePath?: string | undefined;
+    // cloudfrontCustomDomain?: string | undefined,
+    // cloudfrontCertificateId?: string | undefined,
+  },
+): void {
   const stack = new cdk.Stack(app, id, {
     stackName: opts.stackName,
   });
@@ -50,9 +54,8 @@ export function createStack(app: cdk.App, id: string, opts: {
     // cloudfrontCertificateId: opts.cloudfrontCertificateId,
   });
 
-  (o => Object.fromEntries(Object.entries(o).map(([ key, value ]) => ([
-    key, new cdk.CfnOutput(stack, key, { key, value }),
-  ]))))({
+  ((o) =>
+    Object.fromEntries(Object.entries(o).map(([key, value]) => [key, new cdk.CfnOutput(stack, key, { key, value })])))({
     LambdaRoleArn: lambdaRole.roleArn,
     LambdaAuthorizerArn: lambdaAuthorizer.functionArn,
     LambdaPrivateSiteArn: lambdaPrivateSite.functionArn,

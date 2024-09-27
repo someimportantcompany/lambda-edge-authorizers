@@ -3,29 +3,31 @@ import { assert } from '@someimportantcompany/utils';
 import { createOauthProvider, OauthAuthorizerOpts } from './oauth';
 
 interface RemoveAuthorizerOpts {
-  oauthClientId: string,
-  oauthClientSecret: string,
+  oauthClientId: string;
+  oauthClientSecret: string;
 }
 interface ModifyAuthorizerOpts {
-  oauthAuthorize?: Omit<OauthAuthorizerOpts['oauthAuthorize'], 'url'>,
-  oauthTokenExchange?: Omit<OauthAuthorizerOpts['oauthTokenExchange'], 'url'>,
-  oauthIdToken?: Omit<OauthAuthorizerOpts['oauthIdToken'], 'jwksUrl' | 'jwtSecret'>,
+  oauthAuthorize?: Omit<OauthAuthorizerOpts['oauthAuthorize'], 'url'>;
+  oauthTokenExchange?: Omit<OauthAuthorizerOpts['oauthTokenExchange'], 'url'>;
+  oauthIdToken?: Omit<OauthAuthorizerOpts['oauthIdToken'], 'jwksUrl' | 'jwtSecret'>;
 }
 
-interface GenericAuthorizerOpts extends
-  Omit<OauthAuthorizerOpts, keyof RemoveAuthorizerOpts | keyof ModifyAuthorizerOpts>,
-  ModifyAuthorizerOpts {}
+interface GenericAuthorizerOpts
+  extends Omit<OauthAuthorizerOpts, keyof RemoveAuthorizerOpts | keyof ModifyAuthorizerOpts>,
+    ModifyAuthorizerOpts {}
 
 export interface Auth0AuthorizerOpts extends GenericAuthorizerOpts {
-  auth0ClientId: string,
-  auth0ClientSecret: string,
-  auth0Domain: string,
-  auth0Scopes?: string[],
+  auth0ClientId: string;
+  auth0ClientSecret: string;
+  auth0Domain: string;
+  auth0Scopes?: string[];
 }
 
 export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
-  assert(!opts.auth0Domain.startsWith('http://') && !opts.auth0Domain.startsWith('https://'),
-    'Expected auth0Domain to not start with http(s)://');
+  assert(
+    !opts.auth0Domain.startsWith('http://') && !opts.auth0Domain.startsWith('https://'),
+    'Expected auth0Domain to not start with http(s)://',
+  );
 
   return createOauthProvider({
     oauthClientId: opts.auth0ClientId,
@@ -36,7 +38,7 @@ export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
       ...opts.oauthAuthorize,
       url: `https://${opts.auth0Domain}/authorize`,
       query: {
-        scope: [ 'openid', 'email' ].concat(opts.auth0Scopes ?? []).join(' '),
+        scope: ['openid', 'email'].concat(opts.auth0Scopes ?? []).join(' '),
         ...opts.oauthAuthorize?.query,
       },
     },
@@ -54,9 +56,9 @@ export function createAuth0Provider(opts: Auth0AuthorizerOpts) {
 }
 
 export interface GoogleAuthorizerOpts extends GenericAuthorizerOpts {
-  googleClientId: string,
-  googleClientSecret: string,
-  googleScopes: string[],
+  googleClientId: string;
+  googleClientSecret: string;
+  googleScopes: string[];
 }
 
 export function createGoogleProvider(opts: GoogleAuthorizerOpts) {

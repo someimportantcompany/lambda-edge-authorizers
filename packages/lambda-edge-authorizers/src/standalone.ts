@@ -9,38 +9,34 @@ import { jsonStringify, formatErr } from './lib/utils';
 import type { CookieOpts } from './types';
 
 export interface StandaloneAuthCookie {
-  username: string,
-  password: string,
+  username: string;
+  password: string;
 }
 
 export interface StandaloneProfile extends Record<string, unknown> {}
 
-export interface StandaloneAuthorizerOpts<
-  Profile extends StandaloneProfile,
-> {
-  logins: Record<string, { profile?: Profile, password: string }>,
+export interface StandaloneAuthorizerOpts<Profile extends StandaloneProfile> {
+  logins: Record<string, { profile?: Profile; password: string }>;
 
   customise?: {
-    title?: string,
-    logoUrl?: string,
-  },
+    title?: string;
+    logoUrl?: string;
+  };
 
-  comparePassword?: (input: string, password: string) => boolean,
+  comparePassword?: (input: string, password: string) => boolean;
 
-  baseUrl?: string,
-  callbackEndpoint?: string,
-  loginEndpoint?: string,
-  logoutEndpoint?: string,
-  cookie?: CookieOpts,
+  baseUrl?: string;
+  callbackEndpoint?: string;
+  loginEndpoint?: string;
+  logoutEndpoint?: string;
+  cookie?: CookieOpts;
 }
 
-export function creatStandaloneProvider<
-  Profile extends StandaloneProfile,
->(opts: StandaloneAuthorizerOpts<Profile>) {
+export function creatStandaloneProvider<Profile extends StandaloneProfile>(opts: StandaloneAuthorizerOpts<Profile>) {
   return async function standaloneProvider(req: CloudFrontRequest): Promise<{
-    response?: CloudFrontResultResponse | undefined,
-    username?: string | undefined,
-    profile?: Profile | undefined,
+    response?: CloudFrontResultResponse | undefined;
+    username?: string | undefined;
+    profile?: Profile | undefined;
   }> {
     const config: Required<StandaloneAuthorizerOpts<Profile>> = {
       baseUrl: getSelfBaseUrl(req),
@@ -67,14 +63,15 @@ export function creatStandaloneProvider<
 
     const cookies = getCookies(req);
 
-    let auth = typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
-      ? tryCatch(
-        () => readCookieValue<StandaloneAuthCookie>(cookies[config.cookie.name!]!, config.cookie.secret),
-        () => undefined,
-      )
-      : undefined;
+    let auth =
+      typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
+        ? tryCatch(
+            () => readCookieValue<StandaloneAuthCookie>(cookies[config.cookie.name!]!, config.cookie.secret),
+            () => undefined,
+          )
+        : undefined;
 
-    let { profile } = ((auth?.username && opts.logins[auth.username]) ? opts.logins[auth.username] : undefined) ?? {};
+    let { profile } = (auth?.username && opts.logins[auth.username] ? opts.logins[auth.username] : undefined) ?? {};
 
     const isLoggedIn = Boolean(auth?.username && opts.logins[auth.username]);
 
@@ -107,14 +104,16 @@ export function creatStandaloneProvider<
 
         return { response, username: auth?.username, profile };
       } catch (err: any) {
-        console.error(jsonStringify({
-          err: formatErr(err as Error),
-        }));
+        console.error(
+          jsonStringify({
+            err: formatErr(err as Error),
+          }),
+        );
 
         const response = createResponse({
           status: '500',
           headers: {
-            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+            'content-type': [{ key: 'Content-Type', value: 'text/html' }],
           },
           cookies: {
             [config.cookie.name!]: {
@@ -134,7 +133,7 @@ export function creatStandaloneProvider<
       const response = createResponse({
         status: '200',
         headers: {
-          'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+          'content-type': [{ key: 'Content-Type', value: 'text/html' }],
         },
         cookies: {
           [config.cookie.name!]: {

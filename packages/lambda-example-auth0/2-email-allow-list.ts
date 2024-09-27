@@ -11,9 +11,7 @@ const authorizer = createAuth0Provider({
   },
 });
 
-const emailAllowedDomains = [
-  '@someimportantcompany.com',
-];
+const emailAllowedDomains = ['@someimportantcompany.com'];
 
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
   const { request } = event.Records[0].cf;
@@ -25,7 +23,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 
     if (email) {
       // If the id_token contains `email` then check if the email domain is allowed here
-      const allowed = emailAllowedDomains.find(domain => email.endsWith(`@${domain}`));
+      const allowed = emailAllowedDomains.find((domain) => email.endsWith(`@${domain}`));
       if (allowed === undefined) {
         // If the email has an invalid domain name, extract the domain name & pop it in an error message
         const invalid = email.split('@').pop() ?? 'example.com';

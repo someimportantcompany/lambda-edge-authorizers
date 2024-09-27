@@ -3,13 +3,16 @@ import * as cdk from 'aws-cdk-lib';
 /**
  * @link https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html
  */
-export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
-  resourceName: string,
-  lambdaAuthorizer: cdk.aws_lambda.Function,
-  lambdaPrivateSite: cdk.aws_lambda.Function,
-  lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl,
-  authorizerIncludeBody?: boolean | undefined,
-}) {
+export function createCloudfrontDistribution(
+  stack: cdk.Stack,
+  opts: {
+    resourceName: string;
+    lambdaAuthorizer: cdk.aws_lambda.Function;
+    lambdaPrivateSite: cdk.aws_lambda.Function;
+    lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl;
+    authorizerIncludeBody?: boolean | undefined;
+  },
+) {
   const origin = new cdk.aws_cloudfront_origins.FunctionUrlOrigin(opts.lambdaPrivateUrl, {
     originId: 'lambda-private-site',
   });

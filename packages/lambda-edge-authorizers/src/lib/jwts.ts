@@ -3,9 +3,8 @@ import createJwksClient, { JwksClient } from 'jwks-rsa';
 
 export { createJwksClient };
 
-export function decodeToken<T extends Record<string, any>>(token: string, options: VerifyOptions = {}):
-T | undefined {
-  const payload: T | undefined = (jwt.decode(token, options) ?? undefined) as unknown as (T | undefined);
+export function decodeToken<T extends Record<string, any>>(token: string, options: VerifyOptions = {}): T | undefined {
+  const payload: T | undefined = (jwt.decode(token, options) ?? undefined) as unknown as T | undefined;
   return payload;
 }
 
@@ -23,7 +22,7 @@ export function verifyTokenWithJwks<T extends Record<string, any>>(
   options: VerifyOptions = {},
 ): Promise<T> {
   const getKey: GetPublicKeyOrSecret = (header, callback): void => {
-    client.getSigningKey(header.kid, function(err, key) {
+    client.getSigningKey(header.kid, function (err, key) {
       if (err) {
         callback(err);
       } else if (!key) {
@@ -32,7 +31,7 @@ export function verifyTokenWithJwks<T extends Record<string, any>>(
         callback(null, key.getPublicKey());
       }
     });
-  }
+  };
 
   return new Promise((resolve, reject) => {
     jwt.verify(token, getKey, options, (err, decoded) => {

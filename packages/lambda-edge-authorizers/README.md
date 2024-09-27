@@ -3,15 +3,16 @@
 [![NPM](https://badge.fury.io/js/lambda-edge-authorizers.svg)](https://npm.im/lambda-edge-authorizers)
 [![Test](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/someimportantcompany/lambda-edge-authorizers/actions/workflows/test.yml)
 
-A library to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they are not signed-in.
+A library to intercept Cloudfront `viewer-request` events & redirect the visitor to an authentication provider if they
+are not signed-in.
 
 - Must be deployed as a Lambda@Edge function, see limitations belows
 - Supports any Oauth2 provider, with optional ID token support for more features
 - Includes helper functions for popular providers:
 
-Provider | Documentation
----- | ----
-[Auth0](#auth0) | [`auth0.com/docs/get-started`][auth0-getting-started]
+| Provider        | Documentation                                         |
+| --------------- | ----------------------------------------------------- |
+| [Auth0](#auth0) | [`auth0.com/docs/get-started`][auth0-getting-started] |
 
 ## Install
 
@@ -34,7 +35,8 @@ import { createOauthProvider } from 'lambda-edge-authorizers';
 
 - Include this library as a dependency for your Lambda@Edge function.
 - Create your authorizer by passing in the relevant options.
-- Pass the request from the `viewer-request` event to your authorizer, and **if** it returns a response you should return that instead of the original request!
+- Pass the request from the `viewer-request` event to your authorizer, and **if** it returns a response you should
+  return that instead of the original request!
 
 ```ts
 // Typescript
@@ -111,20 +113,20 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 }
 ```
 
-Argument | Description
----- | ----
-`auth0ClientId` | **Required** - Auth0 Client ID.
-`auth0ClientSecret` | **Required** - Auth0 Client Secret.
-`auth0Domain` | **Required** - Auth0 Tenant Domain.
-`oauthAuthorize` | Optional - [Oauth Authorize](#oauthauthorize-properties) properties without `url`.
-`oauthTokenExchange` | Optional - [Oauth Token Exchange](#oauthtokenexchange-properties) properties without `url`.
-`oauthIdToken` | Optional - [Oauth ID Token](#oauthidtoken-properties) properties without `jwksUrl` or `jwtSecret`.
-`baseUrl` | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more.
-`callbackEndpoint` | Optional, defaults to `/` - see [Options](#options) for more.
-`loginStartEndpoint` | Optional, defaults to `/auth/login` - see [Options](#options) for more.
-`loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.
-`logoutEndpoint` | Optional, defaults to `/auth/logout` - see [Options](#options) for more.
-`cookie` | Optional - see [Cookie properties](#cookie-properties) for more.
+| Argument                | Description                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `auth0ClientId`         | **Required** - Auth0 Client ID.                                                                    |
+| `auth0ClientSecret`     | **Required** - Auth0 Client Secret.                                                                |
+| `auth0Domain`           | **Required** - Auth0 Tenant Domain.                                                                |
+| `oauthAuthorize`        | Optional - [Oauth Authorize](#oauthauthorize-properties) properties without `url`.                 |
+| `oauthTokenExchange`    | Optional - [Oauth Token Exchange](#oauthtokenexchange-properties) properties without `url`.        |
+| `oauthIdToken`          | Optional - [Oauth ID Token](#oauthidtoken-properties) properties without `jwksUrl` or `jwtSecret`. |
+| `baseUrl`               | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more.            |
+| `callbackEndpoint`      | Optional, defaults to `/` - see [Options](#options) for more.                                      |
+| `loginStartEndpoint`    | Optional, defaults to `/auth/login` - see [Options](#options) for more.                            |
+| `loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.                         |
+| `logoutEndpoint`        | Optional, defaults to `/auth/logout` - see [Options](#options) for more.                           |
+| `cookie`                | Optional - see [Cookie properties](#cookie-properties) for more.                                   |
 
 For more information, see [Auth0's Getting Starter][auth0-getting-started].
 
@@ -157,86 +159,91 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 }
 ```
 
-Argument | Description
----- | ----
-`oauthClientId` | **Required** - Oauth Client ID
-`oauthClientSecret` | **Required** - Oauth Client Secret
-`oauthAuthorize` | **Required** - [Oauth Authorize](#oauthauthorize-properties) properties
-`oauthTokenExchange` | **Required** - [Oauth Token Exchange](#oauthtokenexchange-properties) properties
-`oauthIdToken` | Optional - [Oauth ID Token](#oauthidtoken-properties) properties
-`baseUrl` | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more.
-`callbackEndpoint` | Optional, defaults to `/` - see [Options](#options) for more.
-`loginStartEndpoint` | Optional, defaults to `/auth/login` - see [Options](#options) for more.
-`loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.
-`logoutEndpoint` | Optional, defaults to `/auth/logout` - see [Options](#options) for more.
-`cookie` | Optional - see [Cookie properties](#cookie-properties) for more.
+| Argument                | Description                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `oauthClientId`         | **Required** - Oauth Client ID                                                          |
+| `oauthClientSecret`     | **Required** - Oauth Client Secret                                                      |
+| `oauthAuthorize`        | **Required** - [Oauth Authorize](#oauthauthorize-properties) properties                 |
+| `oauthTokenExchange`    | **Required** - [Oauth Token Exchange](#oauthtokenexchange-properties) properties        |
+| `oauthIdToken`          | Optional - [Oauth ID Token](#oauthidtoken-properties) properties                        |
+| `baseUrl`               | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more. |
+| `callbackEndpoint`      | Optional, defaults to `/` - see [Options](#options) for more.                           |
+| `loginStartEndpoint`    | Optional, defaults to `/auth/login` - see [Options](#options) for more.                 |
+| `loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.              |
+| `logoutEndpoint`        | Optional, defaults to `/auth/logout` - see [Options](#options) for more.                |
+| `cookie`                | Optional - see [Cookie properties](#cookie-properties) for more.                        |
 
 #### `oauthAuthorize` Properties
 
-Argument | Description
----- | ----
-`url` | **Required** - The full URL to redirect visitors.
-`query` | Optional, an object to merge into the redirect query string, to be stringified with [`qs.stringify`][qs-stringify].
+| Argument | Description                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `url`    | **Required** - The full URL to redirect visitors.                                                                   |
+| `query`  | Optional, an object to merge into the redirect query string, to be stringified with [`qs.stringify`][qs-stringify]. |
 
 #### `oauthTokenExchange` Properties
 
-Argument | Description
----- | ----
-`url` | **Required** - The full URL to exchange a `code` for tokens.
-`headers` | Optional, an object of request headers to merge into the token exchange request.
+| Argument  | Description                                                                      |
+| --------- | -------------------------------------------------------------------------------- |
+| `url`     | **Required** - The full URL to exchange a `code` for tokens.                     |
+| `headers` | Optional, an object of request headers to merge into the token exchange request. |
 
 #### `oauthIdToken` Properties
 
-Verify the `id_token` returned from the Oauth provider, either by [JWKS](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets) or a secret key.
+Verify the `id_token` returned from the Oauth provider, either by
+[JWKS](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets) or a secret key.
 
-Argument | Description
----- | ----
-`required` | Optional - Set to `true` to throw an error if the Oauth provider doesn't return an ID token.
-`jwksUrl` | Optional - The full URL to fetch JWKS keys from. See below for implications of skipping this.
-`jwksHeaders` | Optional - an object of request headers to merge into the JWKS request. Useless without `jwksUrl`.
-`jwtSecret` | Optional - Verify the `id_token` with a known secret instead of JWKS. Cannot be used together with `jwksUrl`.
-`jwtVerifyOpts` | Optional - a list of valid JWT algorithms (e.g. `["HS256", "RS256"]`) to check the token for.
+| Argument        | Description                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `required`      | Optional - Set to `true` to throw an error if the Oauth provider doesn't return an ID token.                  |
+| `jwksUrl`       | Optional - The full URL to fetch JWKS keys from. See below for implications of skipping this.                 |
+| `jwksHeaders`   | Optional - an object of request headers to merge into the JWKS request. Useless without `jwksUrl`.            |
+| `jwtSecret`     | Optional - Verify the `id_token` with a known secret instead of JWKS. Cannot be used together with `jwksUrl`. |
+| `jwtVerifyOpts` | Optional - a list of valid JWT algorithms (e.g. `["HS256", "RS256"]`) to check the token for.                 |
 
-When `jwksUrl` or `jwtSecret` is set & an `id_token` is returned by the Oauth provider, failing to validate the `id_token` will result in a `403 Forbidden` response.
+When `jwksUrl` or `jwtSecret` is set & an `id_token` is returned by the Oauth provider, failing to validate the
+`id_token` will result in a `403 Forbidden` response.
 
-Omitting `jwksUrl` will disable ID token verification. If you omit `jwksUrl`, omit `jwtSecret` & set `required: true` then this library will **decode** `id_token` instead of ignoring it, without verification.
+Omitting `jwksUrl` will disable ID token verification. If you omit `jwksUrl`, omit `jwtSecret` & set `required: true`
+then this library will **decode** `id_token` instead of ignoring it, without verification.
 
 ### Options
 
-Argument | Description
----- | ----
-`baseUrl` | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more.
-`callbackEndpoint` | Optional, defaults to `/` - see [Options](#options) for more.
-`loginStartEndpoint` | Optional, defaults to `/auth/login` - see [Options](#options) for more.
-`loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.
-`logoutEndpoint` | Optional, defaults to `/auth/logout` - see [Options](#options) for more.
-`cookie` | Optional - see [Cookie properties](#cookie-properties) for more.
+| Argument                | Description                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `baseUrl`               | Optional, defaults to `https://${req.headers.Host}` - see [Options](#options) for more. |
+| `callbackEndpoint`      | Optional, defaults to `/` - see [Options](#options) for more.                           |
+| `loginStartEndpoint`    | Optional, defaults to `/auth/login` - see [Options](#options) for more.                 |
+| `loginCallbackEndpoint` | Optional, defaults to `/auth/callback` - see [Options](#options) for more.              |
+| `logoutEndpoint`        | Optional, defaults to `/auth/logout` - see [Options](#options) for more.                |
+| `cookie`                | Optional - see [Cookie properties](#cookie-properties) for more.                        |
 
 #### `cookie` Properties
 
 Optionally modify the cookie attached to visitors when authenticated.
 
-Argument | Description
----- | ----
-`name` | Optional, defaults to `auth` - The name of the cookie that is set.
-`secret` | Optional - Encrypt the cookie value.
-`domain` | Optional - enforce the cookie sits on a particular domain.
-`path` | Optional, defaults to `/` - enforce the cookie sits on a particular path.
-`httpOnly` | Optional, defaults to `false` - enforce the cookie cannot be read by client-side.
-`sameSite` | Optional - enforce cookie Same Site policy.
-`secure` | Optional - enforce the cookie can only be set on `HTTPS` connections.
-`expires` | Optional - set a default expiry time (e.g. `"10m"`, `"30d"`).
+| Argument   | Description                                                                       |
+| ---------- | --------------------------------------------------------------------------------- |
+| `name`     | Optional, defaults to `auth` - The name of the cookie that is set.                |
+| `secret`   | Optional - Encrypt the cookie value.                                              |
+| `domain`   | Optional - enforce the cookie sits on a particular domain.                        |
+| `path`     | Optional, defaults to `/` - enforce the cookie sits on a particular path.         |
+| `httpOnly` | Optional, defaults to `false` - enforce the cookie cannot be read by client-side. |
+| `sameSite` | Optional - enforce cookie Same Site policy.                                       |
+| `secure`   | Optional - enforce the cookie can only be set on `HTTPS` connections.             |
+| `expires`  | Optional - set a default expiry time (e.g. `"10m"`, `"30d"`).                     |
 
 ### Future
 
-We're working on bringing more providers for easier setup - [review the upcoming list here](https://github.com/someimportantcompany/lambda-edge-authorizers/issues/1).
+We're working on bringing more providers for easier setup -
+[review the upcoming list here](https://github.com/someimportantcompany/lambda-edge-authorizers/issues/1).
 
 ## Notes
 
-- There are known restrictions on [Lambda@Edge functions](https://github.com/someimportantcompany/lambda-edge-authorizers/#known-caveats-with-lambdaedge) which you should review before deciding if this fits your use-case.
+- There are known restrictions on
+  [Lambda@Edge functions](https://github.com/someimportantcompany/lambda-edge-authorizers/#known-caveats-with-lambdaedge)
+  which you should review before deciding if this fits your use-case.
 - Thoughts or questions? Please [open an issue](https://github.com/someimportantcompany/lambda-edge-authorizers/issues)!
 
-
-
 [qs-stringify]: https://www.npmjs.com/package/qs#stringify
-[auth0-getting-started]: https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow
+[auth0-getting-started]:
+  https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow
