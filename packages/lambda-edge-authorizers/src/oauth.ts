@@ -14,103 +14,108 @@ import { jsonStringify, formatErr } from './lib/utils';
 import type { CookieOpts } from './types';
 
 export interface OauthCookie {
-  token_type: string,
-  access_token: string,
-  id_token?: string,
-  refresh_token?: string,
-  expires_in?: number,
-  scope?: string,
+  token_type: string;
+  access_token: string;
+  id_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  scope?: string;
 }
 
 export interface OauthIdTokenPayload extends JwtPayload {}
 
 export interface OauthAuthorizerOpts {
-  oauthClientId: string,
-  oauthClientSecret: string,
+  oauthClientId: string;
+  oauthClientSecret: string;
   oauthAuthorize: {
-    url: string,
-    query?: Record<string, string | number | boolean | undefined> | undefined,
-  },
+    url: string;
+    query?: Record<string, string | number | boolean | undefined> | undefined;
+  };
   oauthTokenExchange: {
-    url: string,
-    headers?: Record<string, string | number | boolean | undefined> | undefined,
-  },
-  oauthIdToken?: {
-    required?: true,
-    jwksUrl?: string | undefined,
-    jwksHeaders?: Record<string, string | number | boolean | undefined> | undefined,
-    jwtSecret?: string | undefined,
-    jwtVerifyOpts?: VerifyOptions | undefined,
-  } | undefined,
+    url: string;
+    headers?: Record<string, string | number | boolean | undefined> | undefined;
+  };
+  oauthIdToken?:
+    | {
+        required?: true;
+        jwksUrl?: string | undefined;
+        jwksHeaders?: Record<string, string | number | boolean | undefined> | undefined;
+        jwtSecret?: string | undefined;
+        jwtVerifyOpts?: VerifyOptions | undefined;
+      }
+    | undefined;
 
-  oauthLogoutEndpoint?: {
-    endpoint: string,
-    query?: Record<string, string | number | boolean | undefined> | undefined,
-  } | undefined,
+  oauthLogoutEndpoint?:
+    | {
+        endpoint: string;
+        query?: Record<string, string | number | boolean | undefined> | undefined;
+      }
+    | undefined;
 
-  baseUrl?: string,
-  callbackEndpoint?: string,
-  loginStartEndpoint?: string,
-  loginCallbackEndpoint?: string,
-  logoutEndpoint?: string,
-  cookie?: CookieOpts,
+  baseUrl?: string;
+  callbackEndpoint?: string;
+  loginStartEndpoint?: string;
+  loginCallbackEndpoint?: string;
+  logoutEndpoint?: string;
+  cookie?: CookieOpts;
 }
 
-export function createOauthProvider<
-  IdTokenPayload extends OauthIdTokenPayload,
->(opts: OauthAuthorizerOpts) {
+export function createOauthProvider<IdTokenPayload extends OauthIdTokenPayload>(opts: OauthAuthorizerOpts) {
   const oauth = axios.create();
 
-  oauth.interceptors.response.use(res => {
-    // const { config, status, headers, data } = res;
-    // const { method, url, headers: reqHeaders, params, data: reqData } = config;
-    // console.log(jsonStringify({
-    //   request: { method, url, headers: reqHeaders, params, data: reqData },
-    //   response: { status, headers, data },
-    // }));
-    return res.data;
-  }, err => {
-    if (typeof err?.response?.data?.error_description === 'string') {
-      const { status, headers, data } = err.response;
-      // const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
-      // console.error(jsonStringify({
+  oauth.interceptors.response.use(
+    (res) => {
+      // const { config, status, headers, data } = res;
+      // const { method, url, headers: reqHeaders, params, data: reqData } = config;
+      // console.log(jsonStringify({
       //   request: { method, url, headers: reqHeaders, params, data: reqData },
       //   response: { status, headers, data },
-      //   err: formatErr(err),
       // }));
-      assert(false, 'An error occurred', {
-        err_code: err?.response?.data?.error_code ?? err?.response?.data?.error ?? undefined,
-        err_description: err?.response?.data?.error_description,
-        res: { status, headers, data },
-      });
-    } else {
-      // const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
-      // console.error(jsonStringify({
-      //   req: { method, url, headers: reqHeaders, params, data: reqData },
-      //   err: formatErr(err),
-      // }));
-    }
+      return res.data;
+    },
+    (err) => {
+      if (typeof err?.response?.data?.error_description === 'string') {
+        const { status, headers, data } = err.response;
+        // const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
+        // console.error(jsonStringify({
+        //   request: { method, url, headers: reqHeaders, params, data: reqData },
+        //   response: { status, headers, data },
+        //   err: formatErr(err),
+        // }));
+        assert(false, 'An error occurred', {
+          err_code: err?.response?.data?.error_code ?? err?.response?.data?.error ?? undefined,
+          err_description: err?.response?.data?.error_description,
+          res: { status, headers, data },
+        });
+      } else {
+        // const { method, url, headers: reqHeaders, params, data: reqData } = err.config;
+        // console.error(jsonStringify({
+        //   req: { method, url, headers: reqHeaders, params, data: reqData },
+        //   err: formatErr(err),
+        // }));
+      }
 
-    throw err;
-  });
+      throw err;
+    },
+  );
 
   const jwksClient = opts.oauthIdToken?.jwksUrl
     ? createJwksClient({
-      jwksUri: opts.oauthIdToken.jwksUrl,
-      requestHeaders: {
-        ...(process.env.AWS_LAMBDA_FUNCTION_NAME
-          ? { 'user-agent': process.env.AWS_LAMBDA_FUNCTION_NAME }
-          : undefined),
-        ...opts.oauthIdToken?.jwksHeaders,
-      },
-      timeout: ms('10s'),
-    })
+        jwksUri: opts.oauthIdToken.jwksUrl,
+        requestHeaders: {
+          ...(process.env.AWS_LAMBDA_FUNCTION_NAME
+            ? { 'user-agent': process.env.AWS_LAMBDA_FUNCTION_NAME }
+            : undefined),
+          ...opts.oauthIdToken?.jwksHeaders,
+        },
+        timeout: ms('10s'),
+      })
     : undefined;
 
   return async function oauthProvider(req: CloudFrontRequest): Promise<{
-    response?: CloudFrontResultResponse | undefined,
-    token?: OauthCookie | undefined,
-    idTokenPayload?: IdTokenPayload | undefined,
+    response?: CloudFrontResultResponse | undefined;
+    token?: OauthCookie | undefined;
+    idTokenPayload?: IdTokenPayload | undefined;
   }> {
     const config: Required<OauthAuthorizerOpts> = {
       baseUrl: getSelfBaseUrl(req),
@@ -135,9 +140,13 @@ export function createOauthProvider<
 
     const cookies = getCookies(req);
 
-    let token = typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
-      ? tryCatch(() => readCookieValue<OauthCookie>(cookies[config.cookie.name!]!, config.cookie.secret), () => undefined)
-      : undefined;
+    let token =
+      typeof cookies[config.cookie.name!] === 'string' && cookies[config.cookie.name!].length
+        ? tryCatch(
+            () => readCookieValue<OauthCookie>(cookies[config.cookie.name!]!, config.cookie.secret),
+            () => undefined,
+          )
+        : undefined;
 
     // Validate ID token if present
     let idTokenPayload: IdTokenPayload | undefined = undefined;
@@ -150,9 +159,11 @@ export function createOauthProvider<
             config.oauthIdToken?.jwtVerifyOpts,
           );
         } catch (err) {
-          console.error(jsonStringify({
-            err: formatErr(err as Error),
-          }));
+          console.error(
+            jsonStringify({
+              err: formatErr(err as Error),
+            }),
+          );
         }
       } else if (config.oauthIdToken?.jwtSecret) {
         idTokenPayload = verifyTokenWithSecret<IdTokenPayload>(
@@ -161,16 +172,11 @@ export function createOauthProvider<
           config.oauthIdToken?.jwtVerifyOpts,
         );
       } else {
-        idTokenPayload = decodeToken<IdTokenPayload>(
-          token.id_token,
-          config.oauthIdToken?.jwtVerifyOpts,
-        );
+        idTokenPayload = decodeToken<IdTokenPayload>(token.id_token, config.oauthIdToken?.jwtVerifyOpts);
       }
     }
 
-    const isLoggedIn = token?.id_token
-      ? Boolean(idTokenPayload !== undefined)
-      : Boolean(token);
+    const isLoggedIn = token?.id_token ? Boolean(idTokenPayload !== undefined) : Boolean(token);
 
     // console.log(jsonStringify({
     //   config, req, cookies, isLoggedIn,
@@ -197,14 +203,16 @@ export function createOauthProvider<
 
         return { response };
       } catch (err: any) {
-        console.error(jsonStringify({
-          err: formatErr(err as Error),
-        }));
+        console.error(
+          jsonStringify({
+            err: formatErr(err as Error),
+          }),
+        );
 
         const response = createResponse({
           status: '500',
           headers: {
-            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+            'content-type': [{ key: 'Content-Type', value: 'text/html' }],
           },
           cookies: {
             [config.cookie.name!]: {
@@ -249,11 +257,13 @@ export function createOauthProvider<
             redirect_uri: concatUrl(config.baseUrl, config.loginCallbackEndpoint),
           }),
           responseType: 'json',
-          validateStatus: status => status === 200,
+          validateStatus: (status) => status === 200,
         });
 
-        assert(typeof token?.id_token === 'string' || config.oauthIdToken?.required !== true,
-          'Missing id_token from token response');
+        assert(
+          typeof token?.id_token === 'string' || config.oauthIdToken?.required !== true,
+          'Missing id_token from token response',
+        );
 
         if (token?.id_token) {
           if (jwksClient) {
@@ -264,9 +274,11 @@ export function createOauthProvider<
                 config.oauthIdToken?.jwtVerifyOpts,
               );
             } catch (err) {
-              console.error(jsonStringify({
-                err: formatErr(err as Error),
-              }));
+              console.error(
+                jsonStringify({
+                  err: formatErr(err as Error),
+                }),
+              );
             }
           } else if (config.oauthIdToken?.jwtSecret) {
             idTokenPayload = verifyTokenWithSecret<IdTokenPayload>(
@@ -275,15 +287,15 @@ export function createOauthProvider<
               config.oauthIdToken?.jwtVerifyOpts,
             );
           } else {
-            idTokenPayload = decodeToken<IdTokenPayload>(
-              token.id_token,
-              config.oauthIdToken?.jwtVerifyOpts,
-            );
+            idTokenPayload = decodeToken<IdTokenPayload>(token.id_token, config.oauthIdToken?.jwtVerifyOpts);
           }
 
-          console.debug(jsonStringify({
-            token, idTokenPayload,
-          }));
+          console.debug(
+            jsonStringify({
+              token,
+              idTokenPayload,
+            }),
+          );
         }
 
         const response = createRedirectResponse(concatUrl(config.baseUrl, config.callbackEndpoint), {
@@ -301,14 +313,16 @@ export function createOauthProvider<
 
         return { response, token, idTokenPayload };
       } catch (err: any) {
-        console.error(jsonStringify({
-          err: formatErr(err as Error),
-        }));
+        console.error(
+          jsonStringify({
+            err: formatErr(err as Error),
+          }),
+        );
 
         const response = createResponse({
           status: '500',
           headers: {
-            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+            'content-type': [{ key: 'Content-Type', value: 'text/html' }],
           },
           cookies: {
             [config.cookie.name!]: {
@@ -343,7 +357,7 @@ export function createOauthProvider<
         const response = createResponse({
           status: '200',
           headers: {
-            'content-type': [ { key: 'Content-Type', value: 'text/html' } ],
+            'content-type': [{ key: 'Content-Type', value: 'text/html' }],
           },
           cookies: {
             [config.cookie.name!]: {

@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash } from 'crypto';
 
 export function getCorrelationId() {
   return process.env._X_AMZN_TRACE_ID
@@ -9,7 +9,7 @@ export function getCorrelationId() {
 export function formatErr(err: Error | Record<string, unknown>): Record<string, unknown> {
   return {
     message: typeof err.message === 'string' ? err.message : `${err}`,
-    stack: typeof err.stack === 'string' ? err.stack.split('\n').map(s => s.trim()) : undefined,
+    stack: typeof err.stack === 'string' ? err.stack.split('\n').map((s) => s.trim()) : undefined,
     ...Object.fromEntries(Object.entries(err).filter(([key]) => key !== 'message' && key !== 'stack')),
   };
 }
@@ -20,7 +20,7 @@ export function jsonStringify(value: unknown): string {
    */
   const seen = new Set();
   const safeCyclesSet = function (_key: string, val: unknown) {
-    if (!val || typeof (val) !== 'object') {
+    if (!val || typeof val !== 'object') {
       return val;
     } else if (seen.has(val)) {
       return '[Circular]';

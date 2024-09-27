@@ -3,27 +3,39 @@ import * as cdk from 'aws-cdk-lib';
 /**
  * @link https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html
  */
-export function createCloudfrontDistribution(stack: cdk.Stack, opts: {
-  resourceName: string,
-  lambdaAuthorizer: cdk.aws_lambda.Function,
-  lambdaPrivateSite: cdk.aws_lambda.Function,
-  lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl,
-  authorizerIncludeBody?: boolean | undefined,
-}) {
+export function createCloudfrontDistribution(
+  stack: cdk.Stack,
+  opts: {
+    resourceName: string;
+    lambdaAuthorizer: cdk.aws_lambda.Function;
+    lambdaPrivateSite: cdk.aws_lambda.Function;
+    lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl;
+    authorizerIncludeBody?: boolean | undefined;
+    customDomain?: {
+      hostname: string;
+      certificateId: string;
+    };
+  },
+) {
   const origin = new cdk.aws_cloudfront_origins.FunctionUrlOrigin(opts.lambdaPrivateUrl, {
     originId: 'lambda-private-site',
   });
 
   const cloudfront = new cdk.aws_cloudfront.Distribution(stack, 'Distribution', {
     comment: opts.resourceName,
-    // ...(opts.cloudfrontCustomDomain && {
-    //   domainNames: [ opts.cloudfrontCustomDomain ],
-    // }),
-    // ...(opts.cloudfrontCertificateId && {
-    //   certificate: cdk.aws_certificatemanager.Certificate.fromCertificateArn(stack, 'Certificate', cdk.Fn.join('', [
-    //     'arn:aws:acm:us-east-1:', cdk.Fn.ref('AWS::AccountId'), ':certificate/', opts.cloudfrontCertificateId,
-    //   ])),
-    // }),
+    ...(opts.customDomain && {
+      domainNames: [opts.customDomain.hostname],
+      certificate: cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+        stack,
+        'Certificate',
+        cdk.Fn.join('', [
+          'arn:aws:acm:us-east-1:',
+          cdk.Fn.ref('AWS::AccountId'),
+          ':certificate/',
+          opts.customDomain.certificateId,
+        ]),
+      ),
+    }),
     defaultBehavior: {
       origin,
       allowedMethods: cdk.aws_cloudfront.AllowedMethods.ALLOW_ALL,

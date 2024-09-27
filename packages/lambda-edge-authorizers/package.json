@@ -8,7 +8,7 @@
     "build:clean": "rimraf ./dist",
     "build:lib": "tsc",
     "build:ts": "tsc --declaration --emitDeclarationOnly",
-    "test:unit": "jest --coverage '\\.test\\.ts$' --config='../../jest.config.js'"
+    "test:unit": "jest"
   },
   "repository": {
     "type": "git",

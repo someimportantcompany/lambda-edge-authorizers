@@ -66,12 +66,10 @@ describe('#createOauthProvider.oauthProvider', () => {
       status: '302',
       statusDescription: 'Found',
       headers: {
-        location: [
-          { key: 'Location', value: `${actualLocation}` },
-        ],
+        location: [{ key: 'Location', value: `${actualLocation}` }],
       },
       body: `Redirecting to: ${actualLocation}`,
-      bodyEncoding: 'text'
+      bodyEncoding: 'text',
     });
   });
 
@@ -91,12 +89,10 @@ describe('#createOauthProvider.oauthProvider', () => {
       status: '302',
       statusDescription: 'Found',
       headers: {
-        location: [
-          { key: 'Location', value: actualLocation },
-        ],
+        location: [{ key: 'Location', value: actualLocation }],
       },
       body: `Redirecting to: ${actualLocation}`,
-      bodyEncoding: 'text'
+      bodyEncoding: 'text',
     });
   });
 
@@ -129,7 +125,7 @@ describe('#createOauthProvider.oauthProvider', () => {
     const actualLocation = concatUrl([opts.baseUrl!, opts.callbackEndpoint!]);
     const setCookieValue = cookie.serialize(opts.cookie!.name!, cookieValue, {
       ...opts.cookie,
-      expires: new Date(Date.now() + (oauthResponse.expires_in * 1000)),
+      expires: new Date(Date.now() + oauthResponse.expires_in * 1000),
       maxAge: oauthResponse.expires_in,
     });
 
@@ -137,15 +133,11 @@ describe('#createOauthProvider.oauthProvider', () => {
       status: '302',
       statusDescription: 'Found',
       headers: {
-        location: [
-          { key: 'Location', value: actualLocation },
-        ],
-        'set-cookie': [
-          { key: 'Set-Cookie', value: setCookieValue },
-        ],
+        location: [{ key: 'Location', value: actualLocation }],
+        'set-cookie': [{ key: 'Set-Cookie', value: setCookieValue }],
       },
       body: `Redirecting to: ${actualLocation}`,
-      bodyEncoding: 'text'
+      bodyEncoding: 'text',
     });
 
     scope.done();
@@ -180,15 +172,13 @@ describe('#createOauthProvider.oauthProvider', () => {
       status: '500',
       statusDescription: 'Internal Server Error',
       headers: {
-        'content-type': [
-          { key: 'Content-Type', value: 'text/html' }
-        ],
+        'content-type': [{ key: 'Content-Type', value: 'text/html' }],
         'set-cookie': [
           { key: 'Set-Cookie', value: 'auth=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure' },
         ],
       },
       body: '[HTML-CONTENT]',
-      bodyEncoding: 'text'
+      bodyEncoding: 'text',
     });
 
     // console.log(body);
@@ -211,7 +201,7 @@ describe('#createOauthProvider.oauthProvider', () => {
     const request = createRequest({
       path: opts.callbackEndpoint!,
       headers: {
-        'Cookie': `${opts.cookie!.name!}=${cookieValue}`,
+        Cookie: `${opts.cookie!.name!}=${cookieValue}`,
       },
     });
     const { response } = await authorizer(request);
@@ -231,7 +221,7 @@ describe('#createOauthProvider.oauthProvider', () => {
     const request = createRequest({
       path: opts.logoutEndpoint!,
       headers: {
-        'Cookie': `${opts.cookie!.name!}=${cookieValue}`,
+        Cookie: `${opts.cookie!.name!}=${cookieValue}`,
       },
     });
     let { response } = await authorizer(request);
@@ -243,15 +233,13 @@ describe('#createOauthProvider.oauthProvider', () => {
       status: '200',
       statusDescription: 'OK',
       headers: {
-        'content-type': [
-          { key: 'Content-Type', value: 'text/html' }
-        ],
+        'content-type': [{ key: 'Content-Type', value: 'text/html' }],
         'set-cookie': [
           { key: 'Set-Cookie', value: 'auth=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure' },
-        ]
+        ],
       },
       body: '[HTML-CONTENT]',
-      bodyEncoding: 'text'
+      bodyEncoding: 'text',
     });
 
     // console.log(body);
@@ -261,16 +249,11 @@ describe('#createOauthProvider.oauthProvider', () => {
   });
 
   describe('.oauthIdToken', () => {
-
     // test('should handle a successful response from the oauth provider, including the ID token');
-
     // test('should let authenticated requests pass through, validating the ID token');
-
   });
 
   describe('.oauthLogoutEndpoint', () => {
-
     // test('should redirect to the oauth provider upon logout');
-
   });
 });

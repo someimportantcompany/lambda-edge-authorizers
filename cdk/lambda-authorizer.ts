@@ -5,23 +5,28 @@ import * as cdk from 'aws-cdk-lib';
 function createDefineEnvs(envExamplePath?: string | undefined): Record<string, string> {
   if (envExamplePath && fs.existsSync(envExamplePath)) {
     const envKeys = Object.keys(dotenv.parse(fs.readFileSync(envExamplePath, 'utf8')));
-    return Object.fromEntries(envKeys
-      .filter(key => typeof process.env[key] === 'string')
-      .map(key => [`process.env.${key}`, `"${process.env[key]!}"`]));
+    return Object.fromEntries(
+      envKeys
+        .filter((key) => typeof process.env[key] === 'string')
+        .map((key) => [`process.env.${key}`, `"${process.env[key]!}"`]),
+    );
   } else {
     return {};
   }
 }
 
-export function createLambdaAuthorizer(stack: cdk.Stack, opts: {
-  resourceName: string,
-  role: cdk.aws_iam.Role,
-  entry: string,
-  handler?: string | undefined,
-  envExamplePath?: string | undefined,
-}) {
+export function createLambdaAuthorizer(
+  stack: cdk.Stack,
+  opts: {
+    resourceName: string;
+    role: cdk.aws_iam.Role;
+    entry: string;
+    handler?: string | undefined;
+    envExamplePath?: string | undefined;
+  },
+) {
   const lambdaAuthorizer = new cdk.aws_lambda_nodejs.NodejsFunction(stack, 'AuthorizerFunction', {
-    functionName: cdk.Fn.join('-', [ opts.resourceName, 'authorizer' ]),
+    functionName: cdk.Fn.join('-', [opts.resourceName, 'authorizer']),
     runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
     entry: opts.entry,
     handler: opts.handler ?? 'handler',
