@@ -14,8 +14,12 @@ export function createStack(
     authorizerHandlerFn?: string;
     authorizerIncludeBody?: boolean | undefined;
     envExamplePath?: string | undefined;
-    // cloudfrontCustomDomain?: string | undefined,
-    // cloudfrontCertificateId?: string | undefined,
+    customDomain?:
+      | {
+          hostname: string;
+          certificateId: string;
+        }
+      | undefined;
   },
 ): void {
   const stack = new cdk.Stack(app, id, {
@@ -50,8 +54,7 @@ export function createStack(
     lambdaPrivateSite,
     lambdaPrivateUrl,
     authorizerIncludeBody: opts.authorizerIncludeBody,
-    // cloudfrontCustomDomain: opts.cloudfrontCustomDomain,
-    // cloudfrontCertificateId: opts.cloudfrontCertificateId,
+    customDomain: opts.customDomain,
   });
 
   ((o) =>

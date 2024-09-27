@@ -11,10 +11,12 @@ export function createCloudfrontDistribution(
     lambdaPrivateSite: cdk.aws_lambda.Function;
     lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl;
     authorizerIncludeBody?: boolean | undefined;
-    customDomain?: {
-      hostname: string;
-      certificateId: string;
-    };
+    customDomain?:
+      | {
+          hostname: string;
+          certificateId: string;
+        }
+      | undefined;
   },
 ) {
   const origin = new cdk.aws_cloudfront_origins.FunctionUrlOrigin(opts.lambdaPrivateUrl, {

@@ -1,0 +1,32 @@
+# 1. Configure the AWS CLI
+#    @link https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html
+export AWS_PROFILE="your-aws-profile-here"
+export AWS_REGION="us-east-1"
+
+# 2. Bootstrap CDK
+#    @link https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html
+#    $ npx cdk bootstrap
+
+# 2a. Optionally set a different stack prefix, e.g:
+export CDK_STACK_PREFIX="lambda-edge-authorizers"
+
+# 2b. Configure Cloudfront with a custom domain (optional)
+export CUSTOM_DOMAIN="lambda-edge-authorizers.example.com"
+# 2c. Add a certificate for the custom domain, with $DOMAIN & *.$DOMAIN names
+#     Note: The certificate must be from the us-east-1 region (because Cloudfront)
+export CUSTOM_DOMAIN_CERT_ID="5f2943c3-c158-40cf-a960-2223f38d4496"
+
+# 3. Configure all the various integrations
+
+# 3a. Google
+export GOOGLE_CLIENT_ID="google-client-id"
+export GOOGLE_CLIENT_SECRET="google-client-secret"
+
+# 3b. Microsoft
+export MICROSOFT_CLIENT_ID="microsoft-client-id"
+export MICROSOFT_CLIENT_SECRET="microsoft-client-secret"
+
+# 3c. Auth0
+export AUTH0_CLIENT_ID="your-dev-auth0-client-id"
+export AUTH0_CLIENT_SECRET="your-dev-auth0-client-secret"
+export AUTH0_DOMAIN="your-dev-auth0-tenant.eu.auth0.com"
