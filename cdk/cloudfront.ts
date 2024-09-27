@@ -11,6 +11,10 @@ export function createCloudfrontDistribution(
     lambdaPrivateSite: cdk.aws_lambda.Function;
     lambdaPrivateUrl: cdk.aws_lambda.FunctionUrl;
     authorizerIncludeBody?: boolean | undefined;
+    customDomain?: {
+      hostname: string;
+      certificateId: string;
+    };
   },
 ) {
   const origin = new cdk.aws_cloudfront_origins.FunctionUrlOrigin(opts.lambdaPrivateUrl, {
@@ -19,14 +23,19 @@ export function createCloudfrontDistribution(
 
   const cloudfront = new cdk.aws_cloudfront.Distribution(stack, 'Distribution', {
     comment: opts.resourceName,
-    // ...(opts.cloudfrontCustomDomain && {
-    //   domainNames: [ opts.cloudfrontCustomDomain ],
-    // }),
-    // ...(opts.cloudfrontCertificateId && {
-    //   certificate: cdk.aws_certificatemanager.Certificate.fromCertificateArn(stack, 'Certificate', cdk.Fn.join('', [
-    //     'arn:aws:acm:us-east-1:', cdk.Fn.ref('AWS::AccountId'), ':certificate/', opts.cloudfrontCertificateId,
-    //   ])),
-    // }),
+    ...(opts.customDomain && {
+      domainNames: [opts.customDomain.hostname],
+      certificate: cdk.aws_certificatemanager.Certificate.fromCertificateArn(
+        stack,
+        'Certificate',
+        cdk.Fn.join('', [
+          'arn:aws:acm:us-east-1:',
+          cdk.Fn.ref('AWS::AccountId'),
+          ':certificate/',
+          opts.customDomain.certificateId,
+        ]),
+      ),
+    }),
     defaultBehavior: {
       origin,
       allowedMethods: cdk.aws_cloudfront.AllowedMethods.ALLOW_ALL,

@@ -1,25 +1,21 @@
-const path = require('path')
-const { pathsToModuleNameMapper } = require('ts-jest')
+const path = require('path');
 
-const { compilerOptions } = require('./tsconfig.json')
-
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+/** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  setupFilesAfterEnv: [ '<rootDir>/jest.setup.js' ],
+  setupFilesAfterEnv: [
+    path.join(__dirname, './jest.setup.ts'),
+  ],
   testMatch: [
-    '**/*.spec.(js|ts)',
+    '**/*.test.ts',
   ],
 
   collectCoverage: true,
-  coverageDirectory: path.join(__dirname, './coverage'),
+  coverageDirectory: '<rootDir>/coverage/',
   coverageReporters: ['lcov', 'text'],
 
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
-    prefix: __dirname,
-  }),
   modulePathIgnorePatterns: [
-    '<rootDir>/.next/'
+    '<rootDir>/dist/'
   ],
 };
